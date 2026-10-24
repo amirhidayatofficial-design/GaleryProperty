@@ -3,14 +3,14 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                    <a href="{{ route('admin.users.index') }}" class="hover:text-emerald-600 transition">Manajemen Pengguna</a>
+                    <a href="{{ route('admin.users.index') }}" class="hover:text-primary-600 transition">Manajemen Pengguna</a>
                     <span>/</span>
                     <span class="text-gray-800 font-medium">Detail Pengguna</span>
                 </div>
                 <h2 class="font-bold text-2xl text-gray-800 leading-tight flex items-center gap-2">
                     <span>{{ $user->name }}</span>
                     @if ($user->id === auth()->id())
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-gold-50 text-gold-700 border border-gold-200">
                             Akun Anda
                         </span>
                     @endif
@@ -23,7 +23,7 @@
                     </svg>
                     <span>Kembali</span>
                 </a>
-                <a href="{{ route('admin.users.edit', $user) }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm transition gap-2">
+                <a href="{{ route('admin.users.edit', $user) }}" class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg shadow-sm transition gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -41,8 +41,8 @@
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-gray-100">
                     <div class="flex items-center gap-4">
                         <div class="w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-xl
-                            @if($user->role === 'admin') bg-indigo-100 text-indigo-700
-                            @elseif($user->role === 'agency_partner') bg-emerald-100 text-emerald-700
+                            @if($user->role === 'admin') bg-gold-100 text-gold-700
+                            @elseif($user->role === 'agency_partner') bg-primary-100 text-primary-700
                             @else bg-sky-100 text-sky-700
                             @endif">
                             {{ strtoupper(substr($user->name, 0, 2)) }}
@@ -53,11 +53,11 @@
                             <div class="flex items-center gap-2 mt-2">
                                 {{-- Role Badge --}}
                                 @if ($user->role === 'admin')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gold-50 text-gold-700 border border-gold-200">
                                         Super Admin
                                     </span>
                                 @elseif ($user->role === 'agency_partner')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200">
                                         Mitra Agency
                                     </span>
                                 @else
@@ -68,8 +68,8 @@
 
                                 {{-- Status Badge --}}
                                 @if ($user->status === 'active')
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-primary-500"></span>
                                         Aktif
                                     </span>
                                 @elseif ($user->status === 'pending')
@@ -109,11 +109,11 @@
                         <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Nomor WhatsApp / Telepon</dt>
                         <dd class="mt-1 text-sm font-medium text-gray-900 flex items-center gap-2">
                             @if ($user->phone)
-                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>
                                 <span>{{ $user->phone }}</span>
-                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $user->phone) }}" target="_blank" class="text-xs text-emerald-600 hover:underline">
+                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $user->phone) }}" target="_blank" class="text-xs text-primary-600 hover:underline">
                                     (Buka WhatsApp)
                                 </a>
                             @else
@@ -126,8 +126,8 @@
                         <dt class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Verifikasi Email</dt>
                         <dd class="mt-1 text-sm font-medium text-gray-900">
                             @if ($user->email_verified_at)
-                                <span class="inline-flex items-center gap-1 text-emerald-700">
-                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <span class="inline-flex items-center gap-1 text-primary-700">
+                                    <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                     </svg>
                                     Terverifikasi ({{ $user->email_verified_at->format('d M Y, H:i') }})
@@ -158,7 +158,7 @@
             @if ($user->agencyPartner)
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
                     <h4 class="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                         <span>Profil Entitas Mitra Agency Terhubung</span>
@@ -182,7 +182,7 @@
                         </div>
                         <div class="bg-gray-50 p-3.5 rounded-xl">
                             <div class="text-xs text-gray-500">Status Legalitas Agency</div>
-                            <div class="font-bold text-emerald-700 mt-0.5 uppercase">{{ $user->agencyPartner->verification_status }}</div>
+                            <div class="font-bold text-primary-700 mt-0.5 uppercase">{{ $user->agencyPartner->verification_status }}</div>
                         </div>
                     </div>
                 </div>
@@ -207,7 +207,7 @@
                                         Preferensi: {{ $lead->preferred_location ?? 'Lokasi Terbuka' }} |
                                         Skema: {{ strtoupper($lead->preferred_scheme ?? 'Syariah') }}
                                     </div>
-                                    <div class="text-xs text-emerald-700 font-semibold mt-1">
+                                    <div class="text-xs text-primary-700 font-semibold mt-1">
                                         Anggaran: Rp {{ number_format($lead->budget_min, 0, ',', '.') }} - Rp {{ number_format($lead->budget_max, 0, ',', '.') }}
                                     </div>
                                 </div>

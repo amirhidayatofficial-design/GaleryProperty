@@ -11,6 +11,15 @@ class BuyerLead extends Model
 {
     use HasFactory;
 
+    public const STATUSES = [
+        'new_lead' => 'Lead Baru',
+        'survey_scheduled' => 'Jadwal Survei',
+        'booking_prospect' => 'Prospek Booking',
+        'akad_process' => 'Proses Akad',
+        'closed' => 'Closing',
+        'lost' => 'Batal',
+    ];
+
     protected $fillable = [
         'user_id',
         'agency_partner_id',

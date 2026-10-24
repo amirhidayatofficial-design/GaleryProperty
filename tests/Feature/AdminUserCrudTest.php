@@ -164,6 +164,42 @@ class AdminUserCrudTest extends TestCase
         $this->assertEquals($oldPassword, $this->buyer->password);
     }
 
+    public function test_admin_cannot_register_new_admin_account(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.users.create'))
+            ->assertOk()
+            ->assertDontSee('<option value="admin"', false);
+
+        $response = $this->actingAs($this->admin)->post(route('admin.users.store'), [
+            'name' => 'Admin Kedua',
+            'email' => 'admin.kedua@test.com',
+            'role' => 'admin',
+            'status' => 'active',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertSessionHasErrors('role');
+        $this->assertDatabaseMissing('users', ['email' => 'admin.kedua@test.com']);
+    }
+
+    public function test_admin_cannot_promote_other_user_to_admin(): void
+    {
+        $this->actingAs($this->admin)->get(route('admin.users.edit', $this->buyer))
+            ->assertOk()
+            ->assertDontSee('<option value="admin"', false);
+
+        $response = $this->actingAs($this->admin)->put(route('admin.users.update', $this->buyer), [
+            'name' => $this->buyer->name,
+            'email' => $this->buyer->email,
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors('role');
+        $this->assertEquals('buyer', $this->buyer->fresh()->role);
+    }
+
     public function test_admin_cannot_demote_own_role(): void
     {
         $response = $this->actingAs($this->admin)->put(route('admin.users.update', $this->admin), [

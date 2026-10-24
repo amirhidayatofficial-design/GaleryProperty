@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                    <a href="{{ route('admin.users.index') }}" class="hover:text-emerald-600 transition">Manajemen Pengguna</a>
+                    <a href="{{ route('admin.users.index') }}" class="hover:text-primary-600 transition">Manajemen Pengguna</a>
                     <span>/</span>
                     <span class="text-gray-800 font-medium">Ubah Pengguna</span>
                 </div>
@@ -37,7 +37,7 @@
             @endif
 
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-                <form action="{{ route('admin.users.update', $user) }}" method="POST" class="space-y-6">
+                <form action="{{ route('admin.users.update', $user) }}" method="POST" class="space-y-6" data-confirm-leave>
                     @csrf
                     @method('PUT')
 
@@ -52,7 +52,7 @@
                             id="name"
                             value="{{ old('name', $user->name) }}"
                             required
-                            class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 @error('name') border-rose-400 ring-rose-200 @enderror"
+                            class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('name') border-rose-400 ring-rose-200 @enderror"
                         />
                         @error('name')
                             <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
@@ -71,7 +71,7 @@
                                 id="email"
                                 value="{{ old('email', $user->email) }}"
                                 required
-                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 @error('email') border-rose-400 ring-rose-200 @enderror"
+                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('email') border-rose-400 ring-rose-200 @enderror"
                             />
                             @error('email')
                                 <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
@@ -83,12 +83,17 @@
                                 Nomor WhatsApp / Telepon
                             </label>
                             <input
-                                type="text"
+                                type="tel"
+                                inputmode="numeric"
+                                pattern="[0-9]*"
+                                minlength="10"
+                                maxlength="15"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                 name="phone"
                                 id="phone"
                                 value="{{ old('phone', $user->phone) }}"
                                 placeholder="Contoh: 081234567890"
-                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 @error('phone') border-rose-400 ring-rose-200 @enderror"
+                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('phone') border-rose-400 ring-rose-200 @enderror"
                             />
                             @error('phone')
                                 <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
@@ -106,11 +111,13 @@
                                 name="role"
                                 id="role"
                                 required
-                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-gray-800 @error('role') border-rose-400 ring-rose-200 @enderror"
+                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 text-gray-800 @error('role') border-rose-400 ring-rose-200 @enderror"
                             >
                                 <option value="buyer" {{ old('role', $user->role) === 'buyer' ? 'selected' : '' }}>Calon Pembeli (Keluarga Muslim)</option>
                                 <option value="agency_partner" {{ old('role', $user->role) === 'agency_partner' ? 'selected' : '' }}>Mitra Agency Properti</option>
-                                <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Super Admin (Internal)</option>
+                                @if ($user->isAdmin())
+                                    <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Super Admin (Internal)</option>
+                                @endif
                             </select>
                             @if ($user->id === auth()->id())
                                 <p class="text-xs text-amber-600 mt-1">Peran akun sendiri dilindungi dari penurunan hak akses.</p>
@@ -128,7 +135,7 @@
                                 name="status"
                                 id="status"
                                 required
-                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-gray-800 @error('status') border-rose-400 ring-rose-200 @enderror"
+                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 text-gray-800 @error('status') border-rose-400 ring-rose-200 @enderror"
                             >
                                 <option value="active" {{ old('status', $user->status) === 'active' ? 'selected' : '' }}>Aktif (Dapat Bertransaksi)</option>
                                 <option value="pending" {{ old('status', $user->status) === 'pending' ? 'selected' : '' }}>Pending (Menunggu Verifikasi)</option>
@@ -159,7 +166,7 @@
                                     name="password"
                                     id="password"
                                     placeholder="Isi hanya jika ingin diganti"
-                                    class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 @error('password') border-rose-400 ring-rose-200 @enderror"
+                                    class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('password') border-rose-400 ring-rose-200 @enderror"
                                 />
                                 @error('password')
                                     <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
@@ -175,7 +182,7 @@
                                     name="password_confirmation"
                                     id="password_confirmation"
                                     placeholder="Ulangi kata sandi baru"
-                                    class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                                    class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                                 />
                             </div>
                         </div>
@@ -186,7 +193,7 @@
                         <a href="{{ route('admin.users.index') }}" class="px-4 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-800 transition">
                             Batal
                         </a>
-                        <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                        <button type="submit" class="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-sm font-semibold rounded-lg shadow-sm transition">
                             Simpan Perubahan
                         </button>
                     </div>

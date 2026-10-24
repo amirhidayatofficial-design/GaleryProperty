@@ -17,7 +17,7 @@ class AuthSeededUserTest extends TestCase
     {
         $response = $this->get('/login');
         $response->assertStatus(200);
-        $response->assertSee('Log in');
+        $response->assertSee('Masuk');
     }
 
     public function test_admin_can_login_and_logout(): void
@@ -34,7 +34,8 @@ class AuthSeededUserTest extends TestCase
         // 2. Akses Dashboard
         $dashboardResponse = $this->get('/dashboard');
         $dashboardResponse->assertStatus(200);
-        $dashboardResponse->assertSee("You're logged in!");
+        $dashboardResponse->assertSee("Assalamu'alaikum", false);
+        $dashboardResponse->assertSee('Listing menunggu verifikasi');
 
         // 3. Logout
         $logoutResponse = $this->post('/logout');

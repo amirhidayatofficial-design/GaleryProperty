@@ -11,6 +11,20 @@ class DigitalAkad extends Model
 {
     use HasFactory;
 
+    public const AKAD_TYPES = [
+        'akad_istishna' => 'Akad Istishna',
+        'akad_murabahah' => 'Akad Murabahah',
+        'mou_peminatan' => 'MOU Peminatan',
+        'mou_keagenan' => 'MOU Keagenan',
+    ];
+
+    public const STATUSES = [
+        'draft' => 'Draft',
+        'pending_signature' => 'Menunggu Tanda Tangan',
+        'signed' => 'Ditandatangani',
+        'cancelled' => 'Dibatalkan',
+    ];
+
     protected $fillable = [
         'akad_number',
         'property_project_id',

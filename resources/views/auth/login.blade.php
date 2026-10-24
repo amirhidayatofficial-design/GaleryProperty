@@ -1,4 +1,11 @@
 <x-guest-layout>
+    <x-slot name="title">{{ __('Log in') }}</x-slot>
+
+    <div class="mb-6">
+        <h1 class="font-display text-2xl font-bold text-primary-950">Selamat datang kembali</h1>
+        <p class="text-sm text-gray-500 mt-1">Masuk untuk melihat katalog lebih lanjut.</p>
+    </div>
+
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
@@ -16,8 +23,7 @@
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
+            <x-password-input id="password" class="mt-1"
                             name="password"
                             required autocomplete="current-password" />
 
@@ -27,14 +33,14 @@
         <!-- Remember Me -->
         <div class="block mt-4">
             <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
+                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500" name="remember">
                 <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
             </label>
         </div>
 
         <div class="flex items-center justify-end mt-4">
             @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
+                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" href="{{ route('password.request') }}">
                     {{ __('Forgot your password?') }}
                 </a>
             @endif
@@ -44,4 +50,11 @@
             </x-primary-button>
         </div>
     </form>
+
+    @if (Route::has('register'))
+        <p class="mt-6 pt-6 border-t border-cream-dark text-center text-sm text-gray-500">
+            Belum punya akun?
+            <a href="{{ route('register') }}" class="font-semibold text-primary-700 hover:text-primary-900">Daftar sebagai calon pembeli</a>
+        </p>
+    @endif
 </x-guest-layout>

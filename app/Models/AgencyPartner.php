@@ -11,6 +11,18 @@ class AgencyPartner extends Model
 {
     use HasFactory;
 
+    public const VERIFICATION_STATUSES = [
+        'pending' => 'Menunggu Verifikasi',
+        'verified' => 'Terverifikasi',
+        'rejected' => 'Ditolak',
+    ];
+
+    public const BANKS = [
+        'Bank Syariah Indonesia (BSI)',
+        'Bank Muamalat',
+        'BCA Syariah',
+    ];
+
     protected $fillable = [
         'user_id',
         'agency_name',
@@ -53,6 +65,11 @@ class AgencyPartner extends Model
     public function commissions(): HasMany
     {
         return $this->hasMany(Commission::class);
+    }
+
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class);
     }
 
     public function isVerified(): bool

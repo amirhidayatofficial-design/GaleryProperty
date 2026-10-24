@@ -10,6 +10,13 @@ class Commission extends Model
 {
     use HasFactory;
 
+    public const STATUSES = [
+        'pending' => 'Pending',
+        'approved' => 'Disetujui',
+        'paid' => 'Dibayar',
+        'cancelled' => 'Dibatalkan',
+    ];
+
     protected $fillable = [
         'digital_akad_id',
         'agency_partner_id',

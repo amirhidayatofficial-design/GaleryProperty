@@ -1,29 +1,35 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-
-        <title>{{ config('app.name', 'Laravel') }}</title>
-
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('layouts.partials.head')
     </head>
     <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-            <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-                </a>
+        <div class="min-h-screen grid lg:grid-cols-2">
+            {{-- Panel brand (desktop) --}}
+            <div class="hidden lg:flex flex-col justify-between bg-primary-900 bg-islamic-pattern-light p-12 text-white">
+                <a href="{{ url('/') }}"><x-brand :light="true" /></a>
+
+                <div class="space-y-6 max-w-md">
+                    <p class="font-display text-4xl leading-tight">
+                        Hunian halal, <span class="text-gold-300">akad yang menenangkan.</span>
+                    </p>
+                    <p class="text-primary-100/80 leading-relaxed">
+                        Temukan properti syariah terkurasi tanpa riba, tanpa denda keterlambatan, dan tanpa sita paksa sepihak.
+                    </p>
+                </div>
+
+                <p class="text-xs text-primary-200/60">&copy; {{ date('Y') }} GalleryProperty</p>
             </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
-                {{ $slot }}
+            {{-- Form --}}
+            <div class="flex flex-col items-center justify-center bg-cream px-6 py-12">
+                <a href="{{ url('/') }}" class="lg:hidden mb-8"><x-brand /></a>
+
+                <div class="w-full sm:max-w-md bg-white border border-cream-dark shadow-sm rounded-2xl px-6 py-8 sm:px-8">
+                    {{ $slot }}
+                </div>
+
+                <a href="{{ route('catalog.index') }}" class="mt-6 text-sm text-gray-500 hover:text-primary-700 transition">← Lihat katalog properti</a>
             </div>
         </div>
     </body>

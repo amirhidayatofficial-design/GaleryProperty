@@ -1,3 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+    /* Pola bintang segi delapan (khatam) sebagai ornamen latar yang samar */
+    .bg-islamic-pattern {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23C08F25' stroke-opacity='0.18' stroke-width='1'%3E%3Cpath d='M28 8l5.9 14.1L48 28l-14.1 5.9L28 48l-5.9-14.1L8 28l14.1-5.9z'/%3E%3Crect x='14' y='14' width='28' height='28' transform='rotate(45 28 28)'/%3E%3Crect x='14' y='14' width='28' height='28'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .bg-islamic-pattern-light {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-opacity='0.08' stroke-width='1'%3E%3Cpath d='M28 8l5.9 14.1L48 28l-14.1 5.9L28 48l-5.9-14.1L8 28l14.1-5.9z'/%3E%3Crect x='14' y='14' width='28' height='28' transform='rotate(45 28 28)'/%3E%3Crect x='14' y='14' width='28' height='28'/%3E%3C/g%3E%3C/svg%3E");
+    }
+}

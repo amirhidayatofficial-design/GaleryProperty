@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                    <a href="{{ route('admin.users.index') }}" class="hover:text-emerald-600 transition">Manajemen Pengguna</a>
+                    <a href="{{ route('admin.users.index') }}" class="hover:text-primary-600 transition">Manajemen Pengguna</a>
                     <span>/</span>
                     <span class="text-gray-800 font-medium">Tambah Baru</span>
                 </div>
@@ -25,7 +25,7 @@
     <div class="py-8">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-                <form action="{{ route('admin.users.store') }}" method="POST" class="space-y-6">
+                <form action="{{ route('admin.users.store') }}" method="POST" class="space-y-6" data-confirm-leave>
                     @csrf
 
                     {{-- Nama Lengkap --}}
@@ -40,7 +40,7 @@
                             value="{{ old('name') }}"
                             placeholder="Contoh: Ahmad Fauzan"
                             required
-                            class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 @error('name') border-rose-400 ring-rose-200 @enderror"
+                            class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('name') border-rose-400 ring-rose-200 @enderror"
                         />
                         @error('name')
                             <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
@@ -60,7 +60,7 @@
                                 value="{{ old('email') }}"
                                 placeholder="ahmad@keluargamuslim.com"
                                 required
-                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 @error('email') border-rose-400 ring-rose-200 @enderror"
+                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('email') border-rose-400 ring-rose-200 @enderror"
                             />
                             @error('email')
                                 <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
@@ -72,14 +72,19 @@
                                 Nomor WhatsApp / Telepon
                             </label>
                             <input
-                                type="text"
+                                type="tel"
+                                inputmode="numeric"
+                                pattern="[0-9]*"
+                                minlength="10"
+                                maxlength="15"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                 name="phone"
                                 id="phone"
                                 value="{{ old('phone') }}"
                                 placeholder="Contoh: 081234567890"
-                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 @error('phone') border-rose-400 ring-rose-200 @enderror"
+                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('phone') border-rose-400 ring-rose-200 @enderror"
                             />
-                            <p class="text-xs text-gray-400 mt-1">Harus unik jika diisi.</p>
+                            <p class="text-xs text-gray-400 mt-1">Hanya angka, 10–15 digit, diawali 0 atau 62. Harus unik jika diisi.</p>
                             @error('phone')
                                 <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
                             @enderror
@@ -96,12 +101,12 @@
                                 name="role"
                                 id="role"
                                 required
-                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-gray-800 @error('role') border-rose-400 ring-rose-200 @enderror"
+                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 text-gray-800 @error('role') border-rose-400 ring-rose-200 @enderror"
                             >
                                 <option value="buyer" {{ old('role', 'buyer') === 'buyer' ? 'selected' : '' }}>Calon Pembeli (Keluarga Muslim)</option>
                                 <option value="agency_partner" {{ old('role') === 'agency_partner' ? 'selected' : '' }}>Mitra Agency Properti</option>
-                                <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Super Admin (Internal)</option>
                             </select>
+                            <p class="text-xs text-gray-400 mt-1">Akun Super Admin tidak dapat dibuat dari halaman ini.</p>
                             @error('role')
                                 <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
                             @enderror
@@ -115,7 +120,7 @@
                                 name="status"
                                 id="status"
                                 required
-                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-gray-800 @error('status') border-rose-400 ring-rose-200 @enderror"
+                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 text-gray-800 @error('status') border-rose-400 ring-rose-200 @enderror"
                             >
                                 <option value="active" {{ old('status', 'active') === 'active' ? 'selected' : '' }}>Aktif (Dapat Bertransaksi)</option>
                                 <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>Pending (Menunggu Verifikasi)</option>
@@ -139,7 +144,7 @@
                                 id="password"
                                 required
                                 placeholder="Minimal 8 karakter"
-                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 @error('password') border-rose-400 ring-rose-200 @enderror"
+                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500 @error('password') border-rose-400 ring-rose-200 @enderror"
                             />
                             @error('password')
                                 <p class="text-xs text-rose-600 mt-1.5">{{ $message }}</p>
@@ -156,7 +161,7 @@
                                 id="password_confirmation"
                                 required
                                 placeholder="Ulangi kata sandi"
-                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"
+                                class="w-full text-sm border-gray-200 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                             />
                         </div>
                     </div>
@@ -166,7 +171,7 @@
                         <a href="{{ route('admin.users.index') }}" class="px-4 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-800 transition">
                             Batal
                         </a>
-                        <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                        <button type="submit" class="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-sm font-semibold rounded-lg shadow-sm transition">
                             Simpan Pengguna Baru
                         </button>
                     </div>

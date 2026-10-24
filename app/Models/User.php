@@ -62,6 +62,14 @@ class User extends Authenticatable
         return $this->hasMany(BuyerLead::class);
     }
 
+    /**
+     * Aturan nomor WhatsApp: hanya angka, 10-15 digit, diawali 0 atau 62.
+     */
+    public static function phoneRules(): array
+    {
+        return ['digits_between:10,15', 'starts_with:0,62'];
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
