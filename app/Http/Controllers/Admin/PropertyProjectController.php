@@ -7,7 +7,6 @@ use App\Models\AgencyPartner;
 use App\Models\PropertyProject;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PropertyProjectController extends Controller
@@ -57,6 +56,8 @@ class PropertyProjectController extends Controller
     {
         $validated = $this->validateRequest($request);
         $validated['slug'] = PropertyProject::uniqueSlug($validated['title']);
+        // Projek baru selalu menunggu verifikasi; penayangan lewat menu Verifikasi Listing
+        $validated['is_verified'] = false;
 
         $propertyProject = PropertyProject::create($validated);
 
@@ -92,7 +93,7 @@ class PropertyProjectController extends Controller
      */
     public function update(Request $request, PropertyProject $propertyProject): RedirectResponse
     {
-        $validated = $this->validateRequest($request, $propertyProject);
+        $validated = $this->validateRequest($request);
 
         if ($validated['title'] !== $propertyProject->title) {
             $validated['slug'] = PropertyProject::uniqueSlug($validated['title'], $propertyProject->id);
@@ -118,24 +119,15 @@ class PropertyProjectController extends Controller
             ->with('success', "Projek '{$title}' telah dihapus (soft delete).");
     }
 
-    private function validateRequest(Request $request, ?PropertyProject $propertyProject = null): array
+    /**
+     * Status tayang (is_verified) sengaja tidak diterima di sini; diubah lewat ListingVerificationController.
+     */
+    private function validateRequest(Request $request): array
     {
-        $validated = $request->validate([
+        return $request->validate([
             'agency_partner_id' => ['nullable', 'exists:agency_partners,id'],
             ...PropertyProject::validationRules(),
-            'is_verified' => ['boolean'],
         ]);
-
-        $validated['is_verified'] = $request->boolean('is_verified');
-
-        // Listing hanya boleh tayang jika sudah ada PKS / surat kuasa developer
-        if ($validated['is_verified'] && ! $propertyProject?->legalDocs()->exists()) {
-            throw ValidationException::withMessages([
-                'is_verified' => 'Listing belum bisa ditayangkan: unggah dulu Dokumen Legalitas (PKS / surat kuasa developer) di menu Berkas Properti.',
-            ]);
-        }
-
-        return $validated;
     }
 
     private function agencyOptions(): array

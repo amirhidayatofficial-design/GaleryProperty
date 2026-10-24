@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Agency;
 
 use App\Http\Controllers\Controller;
 use App\Models\AgencyPartner;
+use App\Models\Commission;
 use App\Models\PropertyProject;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
@@ -54,6 +56,13 @@ class PropertyProjectController extends Controller
             'photos' => ['nullable', 'array', 'max:5'],
             'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
+
+        // Sanksi non-uang (tanpa denda): developer dengan invoice komisi lewat jatuh tempo tidak bisa menambah listing baru
+        if (Commission::overdueForDeveloper($validated['developer_name'])->exists()) {
+            throw ValidationException::withMessages([
+                'developer_name' => 'Developer ini masih memiliki tagihan komisi yang lewat jatuh tempo. Listing baru dapat diajukan setelah tagihannya lunas.',
+            ]);
+        }
 
         $propertyProject = $agencyPartner->propertyProjects()->create([
             ...collect($validated)->except(['legal_doc', 'photos'])->all(),

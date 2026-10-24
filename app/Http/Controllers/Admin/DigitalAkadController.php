@@ -7,6 +7,7 @@ use App\Models\AgencyPartner;
 use App\Models\BuyerLead;
 use App\Models\DigitalAkad;
 use App\Models\PropertyProject;
+use App\Support\CommissionSchedule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -66,10 +67,11 @@ class DigitalAkadController extends Controller
         unset($validated['document_pdf']);
 
         $digitalAkad = DigitalAkad::create($validated);
+        $termins = CommissionSchedule::createForAkad($digitalAkad, $request->user())->count();
 
         return redirect()
             ->route('admin.digital-akads.index')
-            ->with('success', "Akad '{$digitalAkad->akad_number}' berhasil diterbitkan.");
+            ->with('success', "Akad '{$digitalAkad->akad_number}' berhasil diterbitkan." . $this->commissionMessage($termins, 0));
     }
 
     /**
@@ -77,7 +79,7 @@ class DigitalAkadController extends Controller
      */
     public function show(DigitalAkad $digitalAkad): View
     {
-        $digitalAkad->load(['propertyProject', 'buyerLead', 'agencyPartner', 'commission']);
+        $digitalAkad->load(['propertyProject', 'buyerLead', 'agencyPartner', 'commissions']);
 
         return view('admin.digital-akads.show', compact('digitalAkad'));
     }
@@ -110,17 +112,27 @@ class DigitalAkadController extends Controller
 
         $digitalAkad->update($validated);
 
+        // Akad sah → terbitkan termin komisi; akad batal → termin yang belum jatuh tempo gugur
+        $created = CommissionSchedule::createForAkad($digitalAkad, $request->user())->count();
+        $voided = $digitalAkad->status === 'cancelled' ? CommissionSchedule::voidPendingForAkad($digitalAkad, $request->user()) : 0;
+
         return redirect()
             ->route('admin.digital-akads.index')
-            ->with('success', "Akad '{$digitalAkad->akad_number}' berhasil diperbarui.");
+            ->with('success', "Akad '{$digitalAkad->akad_number}' berhasil diperbarui." . $this->commissionMessage($created, $voided));
     }
 
     /**
      * Remove the specified resource from storage.
-     * Komisi yang terhubung ikut terhapus (cascadeOnDelete).
+     * Komisi yang belum menyangkut dana ikut terhapus (cascadeOnDelete).
      */
     public function destroy(DigitalAkad $digitalAkad): RedirectResponse
     {
+        if ($digitalAkad->hasFinancialRecords()) {
+            return redirect()
+                ->route('admin.digital-akads.index')
+                ->with('error', "Akad '{$digitalAkad->akad_number}' tidak dapat dihapus karena komisinya sudah menyangkut dana yang diterima atau diteruskan. Batalkan akad jika transaksi tidak jadi.");
+        }
+
         if ($digitalAkad->document_pdf_path) {
             Storage::disk('public')->delete($digitalAkad->document_pdf_path);
         }
@@ -131,6 +143,12 @@ class DigitalAkadController extends Controller
         return redirect()
             ->route('admin.digital-akads.index')
             ->with('success', "Akad '{$akadNumber}' beserta komisinya telah dihapus.");
+    }
+
+    private function commissionMessage(int $created, int $voided): string
+    {
+        return ($created ? " {$created} termin komisi diterbitkan." : '')
+            . ($voided ? " {$voided} termin komisi yang belum jatuh tempo digugurkan." : '');
     }
 
     private function validateRequest(Request $request): array

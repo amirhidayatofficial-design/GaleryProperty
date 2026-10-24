@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Validation\Rule;
 
 class AgencyPartner extends Model
 {
@@ -75,5 +76,20 @@ class AgencyPartner extends Model
     public function isVerified(): bool
     {
         return $this->verification_status === 'verified';
+    }
+
+    /**
+     * Aturan kolom profil agency yang bisa diisi admin maupun agency sendiri.
+     */
+    public static function profileRules(): array
+    {
+        return [
+            'agency_name' => ['required', 'string', 'max:150'],
+            'license_number' => ['nullable', 'string', 'max:100'],
+            'company_address' => ['nullable', 'string'],
+            'bank_name' => ['nullable', 'string', Rule::in(self::BANKS)],
+            'bank_account_number' => ['nullable', 'string', 'max:50'],
+            'bank_account_holder' => ['nullable', 'string', 'max:150'],
+        ];
     }
 }

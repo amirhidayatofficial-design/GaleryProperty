@@ -9,6 +9,7 @@ use App\Models\DigitalAkad;
 use App\Models\PropertyFile;
 use App\Models\PropertyProject;
 use App\Models\User;
+use App\Support\CommissionSchedule;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -333,7 +334,7 @@ class DatabaseSeeder extends Seeder
             $buyerLeads->push($lead);
         }
 
-        // 6. Seed Digital Akads (MOU) (6 records) & 7. Seed Commissions (6 records)
+        // 6. Seed Digital Akads (6 records) & 7. Seed Commissions per termin (4 akad jual beli × 2 termin = 8 records)
         $akadTypes = ['akad_istishna', 'akad_murabahah', 'mou_peminatan'];
 
         for ($k = 0; $k < 6; $k++) {
@@ -363,25 +364,48 @@ class DatabaseSeeder extends Seeder
                 'status' => 'signed',
             ]);
 
-            // Hitung komisi otomatis:
-            $commRate = $project->commission_rate;
-            $totalComm = ($transAmount * $commRate) / 100;
-            $platformFee = 500000.00;
-            $netComm = $totalComm - $platformFee;
+            // Komisi terbit otomatis per termin untuk akad jual beli (MOU tidak menghasilkan komisi)
+            $termins = CommissionSchedule::createForAkad($akad, $admin);
+            $this->advanceFirstTermin($termins->first(), $k, $admin);
+        }
+    }
 
-            Commission::create([
-                'digital_akad_id' => $akad->id,
-                'agency_partner_id' => $agency->id,
-                'base_transaction_amount' => $transAmount,
-                'commission_rate' => $commRate,
-                'total_commission' => $totalComm,
-                'platform_fee' => $platformFee,
-                'net_commission' => $netComm,
-                'status' => ($k < 4) ? 'paid' : 'approved',
-                'paid_at' => ($k < 4) ? now()->subDays(2) : null,
-                'payment_proof_path' => ($k < 4) ? 'receipts/commissions/bsi-transfer-' . ($k + 1) . '.jpg' : null,
-                'notes' => 'Pencairan komisi mitra agency ' . $agency->agency_name . ' atas closing ' . $project->title . '.',
-            ]);
+    /**
+     * Majukan termin 1 ke berbagai status agar semua tahap state machine komisi terlihat saat demo.
+     */
+    private function advanceFirstTermin(?Commission $termin, int $k, User $admin): void
+    {
+        if (! $termin) {
+            return;
+        }
+
+        // k=0: selesai, k=1: dana diterima, k=3: invoice lewat jatuh tempo, k=4: jatuh tempo
+        $target = [0 => Commission::STATUS_SETTLED, 1 => Commission::STATUS_PAID, 3 => Commission::STATUS_INVOICED, 4 => Commission::STATUS_DUE][$k] ?? null;
+        $order = [Commission::STATUS_DUE, Commission::STATUS_INVOICED, Commission::STATUS_PAID, Commission::STATUS_SETTLED];
+
+        foreach ($order as $status) {
+            if ($target === null || array_search($status, $order) > array_search($target, $order)) {
+                break;
+            }
+
+            $invoicedAt = $k === 3 ? now()->subDays(20) : now()->subDays(6);
+
+            match ($status) {
+                Commission::STATUS_DUE => $termin->transitionTo($status, $admin, 'DP lunas, kuitansi developer terlampir.'),
+                Commission::STATUS_INVOICED => $termin->transitionTo($status, $admin, 'Invoice diterbitkan.', [
+                    'invoice_number' => 'INV/' . $invoicedAt->format('Ym') . '/' . str_pad((string) ($k + 1), 4, '0', STR_PAD_LEFT),
+                    'invoiced_at' => $invoicedAt,
+                    'due_at' => $invoicedAt->copy()->addDays((int) config('commission.invoice_due_days'))->endOfDay(),
+                ]),
+                Commission::STATUS_PAID => $termin->transitionTo($status, $admin, 'Dana komisi dari developer diterima.', [
+                    'paid_at' => now()->subDays(2),
+                    'payment_proof_path' => 'receipts/commissions/developer-transfer-' . ($k + 1) . '.jpg',
+                ]),
+                Commission::STATUS_SETTLED => $termin->transitionTo($status, $admin, 'Bagian agency diteruskan.', [
+                    'settled_at' => now()->subDay(),
+                    'payout_proof_path' => 'receipts/payouts/bsi-transfer-' . ($k + 1) . '.jpg',
+                ]),
+            };
         }
     }
 }

@@ -1,6 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
         <x-admin.header :title="$propertyProject->title" :index-url="route('admin.property-projects.index')" index-label="Projek Properti">
+            <a href="{{ route('admin.listing-verifications.show', $propertyProject) }}" class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                {{ $propertyProject->is_verified ? 'Kelola Penayangan' : 'Tinjau Verifikasi' }}
+            </a>
             <a href="{{ route('admin.property-projects.edit', $propertyProject) }}" class="inline-flex items-center px-4 py-2 bg-gold-600 hover:bg-gold-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">Ubah Data</a>
         </x-admin.header>
     </x-slot>

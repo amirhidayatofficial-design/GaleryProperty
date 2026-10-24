@@ -6,10 +6,10 @@
 @php
     // Warna badge ditentukan dari nilai status/tipe yang tersimpan di database
     $color = match ($value) {
-        'verified', 'available', 'signed', 'paid', 'closed', 'active' => 'emerald',
-        'pending', 'draft', 'booked', 'pending_signature', 'booking_prospect', 'akad_process' => 'amber',
-        'rejected', 'cancelled', 'sold_out', 'lost', 'suspended' => 'rose',
-        'approved', 'survey_scheduled' => 'indigo',
+        'verified', 'available', 'signed', 'paid', 'closed', 'active', 'settled' => 'emerald',
+        'pending', 'draft', 'booked', 'pending_signature', 'booking_prospect', 'akad_process', 'due' => 'amber',
+        'rejected', 'cancelled', 'sold_out', 'lost', 'suspended', 'void' => 'rose',
+        'approved', 'survey_scheduled', 'invoiced' => 'indigo',
         default => 'sky',
     };
 

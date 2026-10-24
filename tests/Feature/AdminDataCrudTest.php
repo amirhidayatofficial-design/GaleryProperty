@@ -37,7 +37,6 @@ class AdminDataCrudTest extends TestCase
             'property-files' => PropertyFile::first(),
             'buyer-leads' => BuyerLead::first(),
             'digital-akads' => DigitalAkad::first(),
-            'commissions' => Commission::first(),
         ];
 
         foreach ($resources as $name => $model) {
@@ -47,6 +46,13 @@ class AdminDataCrudTest extends TestCase
             $this->actingAs($this->admin)->get(route("admin.{$name}.show", $model))->assertOk();
             $this->actingAs($this->admin)->get(route("admin.{$name}.edit", $model))->assertOk();
         }
+
+        // Komisi tidak punya form tambah/ubah: hanya daftar, detail, dan invoice
+        $invoiced = Commission::whereNotNull('invoice_number')->firstOrFail();
+        $this->actingAs($this->admin)->get(route('admin.commissions.index'))->assertOk();
+        $this->actingAs($this->admin)->get(route('admin.commissions.index', ['status' => 'overdue']))->assertOk();
+        $this->actingAs($this->admin)->get(route('admin.commissions.show', Commission::firstOrFail()))->assertOk();
+        $this->actingAs($this->admin)->get(route('admin.commissions.invoice', $invoiced))->assertOk()->assertSee($invoiced->invoice_number);
     }
 
     public function test_non_admin_receives_403(): void
@@ -54,7 +60,7 @@ class AdminDataCrudTest extends TestCase
         $buyer = User::where('role', 'buyer')->firstOrFail();
 
         $this->actingAs($buyer)->get(route('admin.property-projects.index'))->assertForbidden();
-        $this->actingAs($buyer)->post(route('admin.commissions.store'), [])->assertForbidden();
+        $this->actingAs($buyer)->post(route('admin.commissions.mark-due', Commission::firstOrFail()), ['note' => 'x'])->assertForbidden();
     }
 
     public function test_agency_partner_crud(): void
@@ -120,15 +126,7 @@ class AdminDataCrudTest extends TestCase
 
         $project = PropertyProject::where('slug', 'cluster-uji-coba')->firstOrFail();
 
-        // Belum ada PKS / surat kuasa developer: tidak bisa ditayangkan
-        $this->actingAs($this->admin)->put(route('admin.property-projects.update', $project), [
-            ...$payload,
-            'is_verified' => '1',
-        ])->assertSessionHasErrors('is_verified');
-        $this->assertFalse($project->fresh()->is_verified);
-
-        $project->files()->create(['file_path' => 'properties/legal/pks.pdf', 'file_type' => 'legal_doc']);
-
+        // Status tayang tidak bisa diubah lewat form Ubah Data (hanya lewat menu Verifikasi Listing)
         $this->actingAs($this->admin)->put(route('admin.property-projects.update', $project), [
             ...$payload,
             'title' => 'Cluster Uji Ganti',
@@ -137,7 +135,7 @@ class AdminDataCrudTest extends TestCase
 
         $project->refresh();
         $this->assertSame('cluster-uji-ganti', $project->slug);
-        $this->assertTrue($project->is_verified);
+        $this->assertFalse($project->is_verified);
 
         $this->actingAs($this->admin)->delete(route('admin.property-projects.destroy', $project));
         $this->assertSoftDeleted($project);
@@ -211,7 +209,7 @@ class AdminDataCrudTest extends TestCase
         $this->assertModelExists($leadWithAkad);
     }
 
-    public function test_digital_akad_crud_generates_number_and_cascades_commission(): void
+    public function test_digital_akad_crud_generates_number_and_protects_financial_records(): void
     {
         $lead = BuyerLead::doesntHave('digitalAkads')->firstOrFail();
 
@@ -242,64 +240,16 @@ class AdminDataCrudTest extends TestCase
             'status' => 'signed',
         ])->assertSessionHasErrors('dp_amount');
 
-        $seededAkad = Commission::firstOrFail()->digitalAkad;
-        $this->actingAs($this->admin)->delete(route('admin.digital-akads.destroy', $seededAkad));
-        $this->assertModelMissing($seededAkad);
-        $this->assertSame(0, Commission::where('digital_akad_id', $seededAkad->id)->count());
+        // Akad yang komisinya sudah menyangkut dana tidak bisa dihapus
+        $settledAkad = Commission::where('status', Commission::STATUS_SETTLED)->firstOrFail()->digitalAkad;
+        $this->actingAs($this->admin)->delete(route('admin.digital-akads.destroy', $settledAkad))->assertSessionHas('error');
+        $this->assertModelExists($settledAkad);
+
+        // Akad yang komisinya belum menyangkut dana boleh dihapus beserta komisinya
+        $dueAkad = Commission::where('status', Commission::STATUS_DUE)->firstOrFail()->digitalAkad;
+        $this->actingAs($this->admin)->delete(route('admin.digital-akads.destroy', $dueAkad));
+        $this->assertModelMissing($dueAkad);
+        $this->assertSame(0, Commission::where('digital_akad_id', $dueAkad->id)->count());
     }
 
-    public function test_commission_crud_calculates_amounts(): void
-    {
-        $akad = DigitalAkad::create([
-            'akad_number' => 'AKAD/UJI/0001',
-            'property_project_id' => PropertyProject::firstOrFail()->id,
-            'buyer_lead_id' => BuyerLead::firstOrFail()->id,
-            'akad_type' => 'akad_istishna',
-            'transaction_amount' => 800000000,
-            'terms_content' => 'Uji',
-            'status' => 'draft',
-        ]);
-        $agency = AgencyPartner::firstOrFail();
-
-        $payload = [
-            'digital_akad_id' => $akad->id,
-            'agency_partner_id' => $agency->id,
-            'base_transaction_amount' => 800000000,
-            'commission_rate' => 2.5,
-            'platform_fee' => 500000,
-            'status' => 'paid',
-        ];
-
-        // Akad belum ditandatangani ketiga pihak: komisi ditolak
-        $this->actingAs($this->admin)->post(route('admin.commissions.store'), $payload)
-            ->assertSessionHasErrors('digital_akad_id');
-
-        $akad->update([
-            'buyer_signed_at' => now(),
-            'agency_signed_at' => now(),
-            'developer_signed_at' => now(),
-            'status' => 'signed',
-        ]);
-
-        $this->actingAs($this->admin)->post(route('admin.commissions.store'), $payload)
-            ->assertRedirect(route('admin.commissions.index'));
-
-        $commission = Commission::where('digital_akad_id', $akad->id)->firstOrFail();
-        $this->assertEquals(20000000, $commission->total_commission);
-        $this->assertEquals(19500000, $commission->net_commission);
-        $this->assertNotNull($commission->paid_at);
-
-        // Relasi 1-to-1: akad yang sama tidak boleh punya dua komisi
-        $this->actingAs($this->admin)->post(route('admin.commissions.store'), $payload)
-            ->assertSessionHasErrors('digital_akad_id');
-
-        // Biaya platform melebihi total komisi ditolak
-        $this->actingAs($this->admin)->put(route('admin.commissions.update', $commission), [
-            ...$payload,
-            'platform_fee' => 999999999,
-        ])->assertSessionHasErrors('platform_fee');
-
-        $this->actingAs($this->admin)->delete(route('admin.commissions.destroy', $commission));
-        $this->assertModelMissing($commission);
-    }
 }

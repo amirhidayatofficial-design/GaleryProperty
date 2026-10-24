@@ -22,14 +22,14 @@ class DashboardController extends Controller
 
         if ($user->isAdmin()) {
             $cards = [
-                ['label' => 'Listing menunggu verifikasi', 'value' => PropertyProject::where('is_verified', false)->count(), 'url' => route('admin.property-projects.index'), 'accent' => true],
+                ['label' => 'Listing menunggu verifikasi', 'value' => PropertyProject::where('is_verified', false)->count(), 'url' => route('admin.listing-verifications.index'), 'accent' => true],
                 ['label' => 'Agency menunggu verifikasi', 'value' => AgencyPartner::where('verification_status', 'pending')->count(), 'url' => route('admin.agency-partners.index', ['verification_status' => 'pending']), 'accent' => true],
                 ['label' => 'Lead baru', 'value' => BuyerLead::where('status', 'new_lead')->count(), 'url' => route('admin.buyer-leads.index', ['status' => 'new_lead'])],
-                ['label' => 'Komisi belum dibayar', 'value' => Commission::whereIn('status', ['pending', 'approved'])->count(), 'url' => route('admin.commissions.index')],
+                ['label' => 'Invoice komisi lewat jatuh tempo', 'value' => Commission::overdue()->count(), 'url' => route('admin.commissions.index', ['status' => 'overdue'])],
                 ['label' => 'Pesan bantuan belum dibaca', 'value' => SupportConversation::unreadConversationCountFor($user), 'url' => route('admin.support.index'), 'accent' => true],
             ];
             $actions = [
-                ['label' => 'Verifikasi listing', 'url' => route('admin.property-projects.index')],
+                ['label' => 'Verifikasi listing', 'url' => route('admin.listing-verifications.index')],
                 ['label' => 'Terbitkan akad', 'url' => route('admin.digital-akads.create')],
                 ['label' => 'Kelola pengguna', 'url' => route('admin.users.index')],
             ];
@@ -39,11 +39,17 @@ class DashboardController extends Controller
                 ['label' => 'Chat belum dibaca', 'value' => Conversation::unreadConversationCountFor($user), 'url' => route('chat.index'), 'accent' => true],
                 ['label' => 'Listing tayang', 'value' => $agency?->propertyProjects()->where('is_verified', true)->count() ?? 0, 'url' => route('agency.property-projects.index')],
                 ['label' => 'Listing menunggu verifikasi', 'value' => $agency?->propertyProjects()->where('is_verified', false)->count() ?? 0, 'url' => route('agency.property-projects.index')],
-                ['label' => 'Komisi bersih dibayar', 'value' => 'Rp ' . number_format($agency?->commissions()->where('status', 'paid')->sum('net_commission') ?? 0, 0, ',', '.')],
+                ['label' => 'Komisi diterima', 'value' => 'Rp ' . number_format($agency?->commissions()->where('status', Commission::STATUS_SETTLED)->sum('net_commission') ?? 0, 0, ',', '.'), 'url' => route('agency.commissions.index')],
             ];
-            $actions = $agency?->isVerified()
-                ? [['label' => 'Ajukan listing baru', 'url' => route('agency.property-projects.create')], ['label' => 'Buka chat', 'url' => route('chat.index')]]
-                : [['label' => 'Lihat status akun agency', 'url' => route('agency.property-projects.index')]];
+            $actions = match (true) {
+                (bool) $agency?->isVerified() => [
+                    ['label' => 'Ajukan listing baru', 'url' => route('agency.property-projects.create')],
+                    ['label' => 'Buka chat', 'url' => route('chat.index')],
+                    ['label' => 'Ubah profil agency', 'url' => route('agency.profile.edit')],
+                ],
+                $agency !== null => [['label' => 'Lihat status profil agency', 'url' => route('agency.profile.edit')]],
+                default => [['label' => 'Lengkapi profil agency', 'url' => route('agency.profile.edit')]],
+            };
         } else {
             $cards = [
                 ['label' => 'Chat belum dibaca', 'value' => Conversation::unreadConversationCountFor($user), 'url' => route('chat.index'), 'accent' => true],

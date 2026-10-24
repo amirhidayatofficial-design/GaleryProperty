@@ -25,19 +25,19 @@ Sebagai wadah terpercaya untuk mencari, menyaring, dan bertransaksi properti hal
 3. **Buyer tertarik.** Calon pembeli menemukan properti di katalog dan menghubungi agency melalui chat di website. Lead otomatis tercatat.
 4. **Agency menindaklanjuti.** Agency melakukan survei dan booking bersama calon pembeli.
 5. **Transaksi terjadi.** Akad digital diterbitkan dan ditandatangani oleh pembeli, agency, dan developer (diwakili agency).
-6. **Komisi dicairkan.** Komisi dibuat dari akad yang sudah ditandatangani ketiga pihak, lalu disetujui dan dicatat pencairannya oleh admin.
+6. **Komisi dicairkan per termin.** Saat akad jual beli ditandatangani ketiga pihak, sistem menerbitkan komisi dalam dua termin. Setiap termin ditagihkan ke developer setelah syaratnya terpenuhi, lalu platform meneruskan bagian agency (lihat [US-05](#us-05--perhitungan-komisi)).
 
 ### E. Asumsi MVP
 - **Developer tidak memiliki akun.** Developer berhubungan langsung dengan agency berdasarkan perjanjian kerja sama (PKS) di luar sistem. Nama developer cukup dicatat sebagai teks di data projek.
 - **Agency menandatangani akad atas nama developer** sebagai wakil (*wakalah*). Karena itu, listing wajib dilengkapi PKS atau surat kuasa developer (tipe berkas *Dokumen Legalitas*), dan admin tidak menayangkan listing tanpa dokumen tersebut.
-- **Pembayaran terjadi di luar sistem.** Pembayaran properti dan komisi (dari developer ke agency, dipotong biaya platform) dilakukan di luar sistem. Sistem hanya mencatat nilai, status, dan bukti transfernya.
+- **Pembayaran terjadi di luar sistem.** Pembayaran properti dilakukan langsung antara pembeli dan developer. Komisi dibayar developer ke rekening bank syariah platform berdasarkan invoice, lalu platform meneruskan bagian agency setelah dipotong platform fee. Sistem mencatat invoice, status, dan bukti transfernya; belum ada integrasi payment gateway.
 - **Role developer** baru akan dipertimbangkan pada fase berikutnya, misalnya jika developer perlu memantau listing atau penjualannya sendiri.
 
 > **Catatan implementasi:** langkah 1, 2, 3, dan 6 sudah diterapkan di aplikasi (menu **Listing Saya** untuk agency, **Katalog** publik, dan **Chat**). Langkah 4 dan 5 (survei, booking, penerbitan akad) masih dicatat oleh admin melalui menu **Kelola Data**.
 
 ### F. Limitasi Saat Ini
 - **Email masih memakai sandbox Mailtrap.** Email verifikasi akun dan lupa kata sandi dikirim lewat [Mailtrap](https://mailtrap.io) (lihat Langkah 3 di [bagian 7](#7-panduan-setup-migrasi--seeding)), sehingga email masuk ke inbox uji Mailtrap, **bukan** ke alamat email asli pengguna. Untuk production, ganti ke layanan SMTP sungguhan (mis. Brevo, Resend, Mailgun).
-- **Agency belum bisa mendaftar sendiri.** Admin membuat akun ber-role Mitra Agency, lalu membuat dan memverifikasi profil agency-nya.
+- **Akun agency tetap dibuat admin.** Admin membuat akun ber-role Mitra Agency; setelah itu agency bisa mengisi sendiri profil agency-nya lewat menu **Profil Agency**, lalu admin memverifikasinya.
 - **Chat tidak real-time sungguhan.** Pesan baru diperiksa setiap 5 detik, bukan lewat websocket.
 - **Lead dari chat belum memiliki nomor WhatsApp** (tercatat `-`), karena registrasi tidak meminta nomor. Admin perlu mengisinya sebelum menyimpan perubahan lead.
 - **Foto & dokumen pada data contoh (seeder) hanya berupa nama file**, sehingga belum tampil di katalog sampai diunggah ulang.
@@ -95,6 +95,7 @@ Satu user story untuk setiap MVP (US-01 sampai US-05), ditambah story sesuai [Al
 4. Saat status diubah menjadi **Terverifikasi**, tanggal verifikasi terisi otomatis. Saat status diubah ke selain itu, tanggal verifikasi dikosongkan.
 5. Agency yang masih memiliki riwayat komisi tidak dapat dihapus, dan sistem menampilkan pesan penolakan.
 6. Daftar agency bisa dicari berdasarkan nama agency, nomor izin, atau nama/email pemilik, dan bisa difilter berdasarkan status verifikasi.
+7. Agency partner dapat mengelola profilnya sendiri lewat menu **Profil Agency** (nama agency, izin usaha, alamat kantor, dan rekening bank syariah). Agency yang belum punya profil dapat mengisinya sendiri dengan status **Menunggu Verifikasi**; perubahan pada profil yang sudah ada tidak mengubah status verifikasi. Hanya admin yang dapat mengubah status verifikasi.
 
 #### US-02 — Daftar Projek Properti
 > Sebagai **Admin**, saya ingin mengelola listing projek properti beserta berkas pendukungnya, agar katalog hanya berisi properti syariah yang terkurasi dan lengkap dokumennya.
@@ -108,6 +109,7 @@ Satu user story untuk setiap MVP (US-01 sampai US-05), ditambah story sesuai [Al
 6. Setiap projek hanya memiliki satu berkas utama. Menandai berkas baru sebagai utama otomatis melepas status utama berkas lain di projek yang sama.
 7. Saat berkas diganti atau dihapus, file fisik lamanya ikut dihapus dari penyimpanan.
 8. Projek hanya bisa diverifikasi dan ditayangkan di katalog jika sudah memiliki minimal satu berkas **Dokumen Legalitas** (PKS / surat kuasa developer).
+9. Verifikasi dilakukan di halaman khusus **Verifikasi Listing**: admin meninjau data, berkas, dan daftar kelengkapan, lalu menekan tombol **Verifikasi & Tayangkan**. Listing yang sudah tayang dapat ditarik kembali lewat tombol **Batalkan Penayangan**. Status tayang tidak dapat diubah dari form Ubah Data.
 
 #### US-03 — Registrasi Calon Pembeli
 > Sebagai **Admin**, saya ingin mencatat profil kebutuhan calon pembeli dan melacak status prospeknya, agar leads yang kredibel dapat ditindaklanjuti oleh agency.
@@ -129,20 +131,48 @@ Satu user story untuk setiap MVP (US-01 sampai US-05), ditambah story sesuai [Al
 3. Uang muka tidak boleh melebihi nilai transaksi, dan tenor harus bernilai 0–600 bulan.
 4. Waktu tanda tangan Pembeli, Agency, dan Developer dicatat terpisah. Akad ditandai "Lengkap ditandatangani 3 pihak" hanya jika ketiganya terisi.
 5. Dokumen akad dapat diunggah dalam format PDF dengan ukuran maksimal 5 MB (opsional).
-6. Menghapus akad ikut menghapus data komisi yang terhubung dengannya.
+6. Menghapus akad ikut menghapus komisinya, kecuali komisi yang dananya sudah diterima atau diteruskan: akad tersebut tidak dapat dihapus (batalkan akad jika transaksi tidak jadi).
+7. Akad jual beli (Istishna / Murabahah) yang berstatus **Ditandatangani** oleh ketiga pihak otomatis menerbitkan termin komisi (lihat US-05). MOU tidak menghasilkan komisi.
 
 #### US-05 — Perhitungan Komisi
-> Sebagai **Admin**, saya ingin sistem menghitung komisi agen secara otomatis dari setiap akad, agar bagi hasil komisi transparan dan bebas salah hitung.
+> Sebagai **Admin**, saya ingin komisi agency diterbitkan, ditagihkan, dan diteruskan per termin sesuai prinsip syariah, agar hak setiap pihak jelas sejak awal dan bebas sengketa.
+
+**Landasan akad:**
+- **Developer ↔ Agency:** *samsarah/wasathah* berkarakter *ju'alah*. Imbalan hanya menjadi hak agency setelah hasilnya tercapai, sehingga komisi dibayar per termin.
+- **Agency ↔ Platform:** *wakalah bil ujrah*. Platform menagih komisi atas nama agency dan mengambil platform fee sebagai *ujrah*. Dana yang diterima platform berstatus amanah milik agency.
+- Rujukan: Fatwa DSN-MUI No. 93/DSN-MUI/IV/2014 tentang Keperantaraan (Wasathah) dalam Bisnis Properti, serta fatwa tentang Ju'alah dan Wakalah bil Ujrah. Penerapannya perlu dikonfirmasi ke Dewan Pengawas Syariah.
+
+**State machine (satu baris komisi per termin):**
+```
+PENDING ──(syarat termin terpenuhi)──▶ DUE ──(terbitkan invoice)──▶ INVOICED ──(developer bayar)──▶ PAID ──(payout ke agency)──▶ SETTLED
+   └──(akad batal sebelum syarat termin terpenuhi)──▶ VOID
+```
+
+| Status | Label | Arti |
+| :--- | :--- | :--- |
+| `pending` | Menunggu Syarat | Termin terbit, syarat belum terpenuhi |
+| `due` | Jatuh Tempo | Syarat terpenuhi (disertai bukti/keterangan), siap ditagihkan |
+| `invoiced` | Ditagihkan | Invoice `INV/YYYYMM/XXXX` terbit ke developer dengan jatuh tempo |
+| `paid` | Dana Diterima | Dana komisi diterima di rekening platform |
+| `settled` | Selesai | Bagian agency sudah diteruskan (final) |
+| `void` | Gugur | Akad batal sebelum syarat termin terpenuhi (final) |
 
 **Acceptance Criteria:**
-1. Setiap komisi terhubung ke tepat satu akad, dan satu akad hanya boleh memiliki satu data komisi. Komisi hanya bisa dibuat dari akad berstatus **Ditandatangani** yang sudah ditandatangani pembeli, agency, dan developer.
-2. Kolom wajib: akad, agency penerima, nilai transaksi, persentase komisi, biaya platform, dan status (Pending / Disetujui / Dibayar / Dibatalkan).
-3. Sistem menghitung otomatis:
-   - **Total komisi** = nilai transaksi × persentase komisi
-   - **Komisi bersih** = total komisi − biaya platform
-4. Biaya platform yang melebihi total komisi ditolak.
-5. Jika status **Dibayar** dipilih tanpa tanggal pembayaran, tanggal pembayaran terisi otomatis dengan waktu saat itu.
-6. Bukti transfer dapat diunggah dalam format JPG/PNG/WEBP/PDF dengan ukuran maksimal 5 MB (opsional).
+1. Komisi **tidak diisi manual**. Saat akad jual beli berstatus **Ditandatangani** oleh pembeli, agency, dan developer, sistem otomatis menerbitkan dua termin berstatus `pending`:
+   - **Termin 1 (50%)**: akad jual beli ditandatangani 3 pihak dan DP lunas.
+   - **Termin 2 (50%)**: serah terima unit (atau AJB untuk cash keras).
+2. Perhitungan per termin, dengan persentase komisi **dikunci dari listing saat akad** (perubahan listing setelahnya tidak memengaruhi komisi yang sudah terbit):
+   - **Komisi termin** = nilai transaksi × persentase komisi × persentase termin
+   - **Platform fee (ujrah)** = komisi termin × 20%
+   - **Bagian agency** = komisi termin − platform fee
+3. Setiap transisi dijalankan admin lewat tombol di halaman detail komisi, dan hanya transisi yang sah dari status saat ini yang tersedia. Menandai syarat terpenuhi wajib disertai keterangan; mencatat pembayaran developer dan payout ke agency wajib disertai bukti transfer (JPG/PNG/WEBP/PDF, maks. 5 MB).
+4. Invoice dapat dicetak atau disimpan sebagai PDF untuk dikirim ke developer (developer tidak memiliki akun). Jatuh tempo invoice 14 hari.
+5. **Tanpa denda keterlambatan.** Invoice yang lewat jatuh tempo ditandai di daftar komisi dan dashboard, dan developer tersebut tidak dapat menerima pengajuan listing baru dari agency sampai tagihannya lunas.
+6. **Amanah payout:** bagian agency diteruskan paling lambat 3 hari kerja setelah dana diterima; keterlambatan ditandai di daftar komisi.
+7. **Tanpa clawback.** Jika akad dibatalkan, hanya termin yang masih `pending` yang gugur. Termin yang syaratnya sudah terpenuhi tetap menjadi hak agency.
+8. Setiap perubahan status tercatat di **riwayat status** (siapa, kapan, dari status apa ke status apa, dan catatannya).
+9. Agency dapat memantau seluruh termin komisinya di menu **Komisi Saya** beserta rinciannya dan riwayat statusnya, tanpa melihat komisi agency lain.
+10. Persentase termin, platform fee, jatuh tempo invoice, dan batas payout diatur di `config/commission.php` dan wajib sama dengan yang tercantum di PKS.
 
 #### US-06 — Chat Calon Pembeli dengan Agency Partner
 > Sebagai **Calon Pembeli**, saya ingin bertanya langsung kepada agency partner tentang projek yang saya minati melalui chat di website, agar semua komunikasi tercatat di satu tempat tanpa harus membagikan nomor pribadi.
@@ -354,14 +384,14 @@ Hasil audit integritas data pasca eksekusi `php artisan db:seed`:
 | `property_files` | `App\Models\PropertyFile` | 30 | 30 | **MATCH** | 3 Berkas per unit (Fasad, Denah, Legalitas) |
 | `buyer_leads` | `App\Models\BuyerLead` | 15 | 15 | **MATCH** | 15 Leads Pembeli dengan profiling kriteria |
 | `digital_akads` | `App\Models\DigitalAkad` | 6 | 6 | **MATCH** | 6 Akad MOU Digital tertandatangani lengkap |
-| `commissions` | `App\Models\Commission` | 6 | 6 | **MATCH** | 6 Perhitungan komisi agen terikat 1-to-1 |
+| `commissions` | `App\Models\Commission` | 8 | 8 | **MATCH** | 4 akad jual beli × 2 termin (MOU tidak menghasilkan komisi); termin 1 berada di status Selesai, Dana Diterima, Ditagihkan (lewat jatuh tempo), dan Jatuh Tempo |
 
 ### Audit Foreign Key & Relasi:
 - **`User -> AgencyPartner`**: `PASS` (Akun agen terhubung ke profil agency).
 - **`AgencyPartner -> PropertyProjects`**: `PASS` (Listing terhubung ke agency penanggung jawab).
 - **`PropertyProject -> PropertyFiles`**: `PASS` (Foto dan berkas legalitas terhubung per unit).
 - **`BuyerLead -> Properti & Agency`**: `PASS` (Atribusi prospek pembeli valid).
-- **`DigitalAkad -> Commission`**: `PASS` (Kalkulasi komisi bersih terbukti akurat).
+- **`DigitalAkad -> Commission`**: `PASS` (Satu akad jual beli menghasilkan dua termin; total komisi kedua termin tepat sama dengan nilai transaksi × persentase komisi).
 
 ---
 

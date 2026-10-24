@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DigitalAkad extends Model
 {
@@ -69,9 +69,9 @@ class DigitalAkad extends Model
         return $this->belongsTo(AgencyPartner::class);
     }
 
-    public function commission(): HasOne
+    public function commissions(): HasMany
     {
-        return $this->hasOne(Commission::class);
+        return $this->hasMany(Commission::class)->orderBy('termin');
     }
 
     public function isFullySigned(): bool
@@ -79,5 +79,25 @@ class DigitalAkad extends Model
         return !is_null($this->buyer_signed_at) &&
                !is_null($this->agency_signed_at) &&
                !is_null($this->developer_signed_at);
+    }
+
+    /**
+     * Akad jual beli yang sah (ditandatangani 3 pihak) dan belum punya komisi akan menerbitkan termin komisi.
+     */
+    public function generatesCommission(): bool
+    {
+        return $this->status === 'signed'
+            && $this->isFullySigned()
+            && $this->agency_partner_id !== null
+            && in_array($this->akad_type, config('commission.eligible_akad_types'), true)
+            && ! $this->commissions()->exists();
+    }
+
+    /**
+     * Komisi yang dananya sudah diterima atau diteruskan adalah catatan keuangan; akadnya tidak boleh dihapus.
+     */
+    public function hasFinancialRecords(): bool
+    {
+        return $this->commissions()->whereIn('status', [Commission::STATUS_PAID, Commission::STATUS_SETTLED])->exists();
     }
 }

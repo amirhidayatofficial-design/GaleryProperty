@@ -47,10 +47,16 @@
                         @endif
                     </x-admin.detail>
                     <x-admin.detail label="Komisi">
-                        @if ($digitalAkad->commission)
-                            <a href="{{ route('admin.commissions.show', $digitalAkad->commission) }}" class="text-primary-700 hover:underline">
-                                Rp {{ number_format($digitalAkad->commission->net_commission, 0, ',', '.') }} (bersih)
-                            </a>
+                        @foreach ($digitalAkad->commissions as $commission)
+                            <div class="flex flex-wrap items-center gap-2 {{ $loop->first ? '' : 'mt-1.5' }}">
+                                <a href="{{ route('admin.commissions.show', $commission) }}" class="text-primary-700 hover:underline">
+                                    {{ $commission->terminLabel() }} · Rp {{ number_format($commission->total_commission, 0, ',', '.') }}
+                                </a>
+                                <x-admin.badge :value="$commission->status" :labels="\App\Models\Commission::STATUSES" />
+                            </div>
+                        @endforeach
+                        @if ($digitalAkad->commissions->isEmpty() && in_array($digitalAkad->akad_type, config('commission.eligible_akad_types'), true))
+                            <span class="text-gray-400">Terbit otomatis setelah akad berstatus Ditandatangani oleh ketiga pihak.</span>
                         @endif
                     </x-admin.detail>
                 </dl>

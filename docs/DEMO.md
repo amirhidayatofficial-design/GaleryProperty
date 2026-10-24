@@ -63,13 +63,14 @@ Tujuan: menunjukkan bahwa agency bisa mengajukan listing dan membalas chat, tapi
 
 | # | Langkah | Yang ditunjukkan |
 | :-: | :--- | :--- |
-| 1 | Login sebagai agency (di jendela incognito) | Dashboard agency: chat belum dibaca, listing tayang / menunggu verifikasi, total komisi bersih yang sudah dibayar. |
+| 1 | Login sebagai agency (di jendela incognito) | Dashboard agency: chat belum dibaca, listing tayang / menunggu verifikasi, total komisi yang sudah diterima. |
 | 2 | Buka **Chat** | Pesan dari Fulan bin Abdullah (demo A2) muncul dengan **penanda belum dibaca**. |
 | 3 | Buka percakapan, balas: *"Wa'alaikumussalam, masih tersedia. Mau jadwalkan survei?"* | Di jendela pembeli, balasan muncul sendiri dalam ± 5 detik tanpa reload. |
 | 4 | Buka **Listing Saya** | Daftar listing milik agency ini saja, beserta status pengajuan dan jumlah dokumen kuasa. |
 | 5 | Klik **Ajukan Listing**, isi data, coba simpan **tanpa** PKS | Ditolak: PKS / surat kuasa developer wajib dilampirkan. |
 | 6 | Lampirkan file PDF, klik **Ajukan ke Admin** | Listing tersimpan dengan status **Menunggu Verifikasi** dan **belum** tampil di katalog. |
 | 7 | Buka salah satu listing yang **sudah tayang**, misalnya Cluster Madinah | Tidak ada tombol Ubah: listing yang sudah tayang hanya bisa diubah admin. |
+| 8 | Klik nama akun di kanan atas → **Profil Agency**, ubah alamat kantor atau rekening, simpan | Profil agency tersimpan dan status **Terverifikasi** tetap. Status verifikasi tidak bisa diubah agency sendiri. |
 
 ### A4. Admin (`admin@galerypropertysyariah.com`)
 
@@ -77,12 +78,12 @@ Tujuan: menunjukkan peran admin sebagai penjaga kualitas dan kepatuhan syariah.
 
 | # | Langkah | Yang ditunjukkan |
 | :-: | :--- | :--- |
-| 1 | Login sebagai admin | Dashboard admin: listing dan agency yang menunggu verifikasi, lead baru, komisi belum dibayar. |
-| 2 | **Kelola Data → Projek Properti**, buka listing yang diajukan agency (demo A3), klik **Ubah**, centang **Verifikasi & tayangkan di katalog**, simpan | Listing kini tayang di katalog. Coba juga pada projek baru tanpa Dokumen Legalitas: ditolak. |
+| 1 | Login sebagai admin | Dashboard admin: listing dan agency yang menunggu verifikasi, lead baru, invoice komisi lewat jatuh tempo, pesan bantuan. |
+| 2 | Menu **Verifikasi Listing** → tab *Menunggu Verifikasi*, klik **Tinjau** pada listing yang diajukan agency (demo A3), periksa daftar kelengkapan, lalu klik tombol **Verifikasi & Tayangkan** | Listing kini tayang di katalog. Pada listing tanpa Dokumen Legalitas, tombolnya nonaktif. Listing yang sudah tayang bisa ditarik lewat tombol **Batalkan Penayangan**. |
 | 3 | **Kelola Data → Leads Pembeli** | Lead dari chat demo A2 muncul dengan catatan *"Lead otomatis dari chat website."* |
 | 4 | **Kelola Data → Agency Partner**, coba hapus **PT Berkah Properti Syariah** | Ditolak karena agency masih memiliki riwayat komisi. |
 | 5 | **Kelola Data → Akad Digital**, buka salah satu akad | Nomor akad otomatis `AKAD/YYYYMM/XXXX` dan status tanda tangan 3 pihak. |
-| 6 | **Kelola Data → Komisi**, buka salah satu komisi | Total komisi = nilai transaksi × persentase, komisi bersih = total − biaya platform. |
+| 6 | **Kelola Data → Komisi** | Komisi per termin dengan status berbeda-beda. Banner kuning menandai invoice lewat jatuh tempo (tanpa denda). Buka salah satu: rincian komisi termin, platform fee 20%, bagian agency, riwayat status, dan hanya tombol transisi yang sah. |
 | 7 | **Kelola Pengguna** | CRUD akun semua peran. Ubah status pembeli menjadi **Suspended**, lalu coba login sebagai pembeli itu: ditolak dengan pesan akun ditangguhkan. Mengubah status ke **Aktif** sama dengan memverifikasi email secara manual. |
 | 8 | **Kelola Pengguna → Tambah Pengguna Baru**, buka pilihan Peran | Hanya ada Calon Pembeli dan Mitra Agency. Akun Super Admin tidak bisa dibuat atau dinaikkan dari aplikasi. |
 
@@ -107,8 +108,8 @@ Gunakan jendela biasa untuk **admin** dan **pembeli**, serta jendela incognito u
 
 ### Langkah 2 — Admin memverifikasi dan menayangkan *(jendela biasa, login admin)*
 1. **Dashboard**: kartu *Listing menunggu verifikasi* bertambah.
-2. **Kelola Data → Projek Properti** → **Griya Tahfidz Residence Bekasi** → **Ubah**.
-3. Centang **Verifikasi & tayangkan di katalog** → **Simpan Perubahan**.
+2. Menu **Verifikasi Listing** → tab *Menunggu Verifikasi* → **Griya Tahfidz Residence Bekasi** → **Tinjau**.
+3. Periksa daftar kelengkapan dan buka PKS-nya, lalu klik tombol **Verifikasi & Tayangkan**.
 4. Logout.
 
 ### Langkah 3 — Calon pembeli baru mendaftar dan bertanya *(jendela biasa)*
@@ -137,16 +138,21 @@ Gunakan jendela biasa untuk **admin** dan **pembeli**, serta jendela incognito u
 3. Klik **Terbitkan Akad** → nomor akad otomatis, misalnya `AKAD/202610/0007`.
 4. *(Opsional)* Coba isi DP lebih besar dari nilai transaksi: ditolak.
 
-### Langkah 6 — Admin mencatat komisi *(jendela biasa, masih admin)*
-1. **Kelola Data → Komisi → Tambah Komisi**. Dropdown Akad Digital hanya berisi akad yang sudah ditandatangani 3 pihak dan belum punya komisi, yaitu akad Ahmad Demo.
-2. Isi: Agency **PT Berkah Properti Syariah** · Nilai Transaksi **1200000000** · Persentase **3** · Biaya Platform **500000** · Status **Dibayar**.
-3. Simpan → hasil hitung otomatis:
-   - Total komisi: **Rp 36.000.000** (1,2 miliar × 3%)
-   - Komisi bersih: **Rp 35.500.000** (36 juta − 500 ribu)
-   - Tanggal dibayar terisi otomatis.
+### Langkah 6 — Komisi termin 1 ditagih dan dicairkan *(jendela biasa, masih admin)*
+1. Saat akad disimpan, muncul pesan *"2 termin komisi diterbitkan"*. Buka **Kelola Data → Komisi**: ada dua termin untuk akad Ahmad Demo, masing-masing berstatus **Menunggu Syarat**.
+2. Buka **Termin 1**. Rinciannya dihitung otomatis:
+   - Komisi termin: **Rp 18.000.000** (1,2 miliar × 3% × 50%)
+   - Platform fee (ujrah wakalah 20%): **Rp 3.600.000**
+   - Bagian agency: **Rp 14.400.000**
+3. Isi *Bukti syarat terpenuhi*, misalnya *"DP lunas, kuitansi developer no. 001"*, lalu klik **Tandai Syarat Terpenuhi** → status **Jatuh Tempo**.
+4. Klik **Terbitkan Invoice** → nomor `INV/YYYYMM/XXXX` dengan jatuh tempo 14 hari. Klik **Cetak Invoice** untuk melihat invoice yang dikirim ke developer (bisa disimpan sebagai PDF).
+5. Kembali ke komisi, isi tanggal dan unggah gambar apa saja sebagai bukti, lalu klik **Catat Pembayaran Developer** → status **Dana Diterima**, lengkap dengan batas payout 3 hari kerja.
+6. Unggah bukti transfer, lalu klik **Catat Payout ke Agency** → status **Selesai**. Riwayat status menampilkan setiap langkah beserta waktunya.
+7. *(Opsional)* Buka **Termin 2**: masih **Menunggu Syarat** sampai serah terima unit.
 
 ### Langkah 7 — Agency melihat komisinya *(jendela incognito)*
-1. Buka **Dashboard** agency (refresh): kartu *Komisi bersih dibayar* bertambah **Rp 35.500.000**.
+1. Buka menu **Komisi Saya**: Termin 1 **Selesai** dengan bagian agency **Rp 14.400.000**, dan Termin 2 **Menunggu Syarat**.
+2. Buka detail Termin 1: rincian perhitungan dan riwayat statusnya terlihat transparan. Dashboard agency: kartu *Komisi diterima* bertambah **Rp 14.400.000**.
 
 **Selesai.** Seluruh alur bisnis sudah ditunjukkan: pengajuan → verifikasi → tayang → chat → lead → akad → komisi.
 
@@ -158,6 +164,8 @@ Gunakan jendela biasa untuk **admin** dan **pembeli**, serta jendela incognito u
 | :--- | :--- |
 | Kenapa pembeli tidak bisa langsung WhatsApp agency? | Keputusan produk: semua komunikasi lewat chat website agar tercatat dan lead otomatis masuk ke sistem. |
 | Siapa yang tanda tangan atas nama developer? | Agency, berdasarkan PKS / surat kuasa (*wakalah*) yang dilampirkan saat pengajuan listing. Developer belum punya akun di MVP ini. |
-| Apakah sistem memproses pembayaran? | Tidak. Pembayaran properti dan komisi terjadi di luar sistem; sistem hanya mencatat nilai, status, dan bukti transfer. |
+| Apakah sistem memproses pembayaran? | Tidak. Pembayaran properti langsung ke developer. Komisi ditagih lewat invoice ke rekening platform lalu diteruskan ke agency; sistem mencatat invoice, status, dan bukti transfernya. |
+| Kenapa komisi dibayar per termin? | Sesuai akad ju'alah: hak agency muncul seiring hasil yang tercapai. Jika akad batal sebelum serah terima, termin 2 gugur tanpa perlu menarik kembali komisi yang sudah dibayar. |
+| Bagaimana jika developer telat membayar komisi? | Tidak ada denda. Invoice ditandai lewat jatuh tempo, admin mengirim pengingat, dan developer tersebut tidak bisa menambah listing baru sampai lunas. |
 | Bagaimana jika pembeli lupa kata sandi? | Klik **Lupa kata sandi?** di halaman login; tautan atur ulang dikirim lewat email (saat demo masuk ke inbox Mailtrap). Admin juga bisa mengganti kata sandinya lewat Kelola Pengguna. |
 | Bagaimana agency baru bergabung? | Admin membuat akun ber-role Mitra Agency, lalu membuat dan memverifikasi profil agency-nya di Kelola Data → Agency Partner. |

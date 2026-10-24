@@ -14,7 +14,7 @@
 
             @if (! $agencyPartner)
                 <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-                    Akun Anda belum terhubung ke profil agency. Hubungi admin untuk mendaftarkan profil agency Anda.
+                    Akun Anda belum memiliki profil agency. <a href="{{ route('agency.profile.edit') }}" class="font-semibold underline">Lengkapi profil agency</a> agar admin dapat memverifikasinya.
                 </div>
             @elseif (! $agencyPartner->isVerified())
                 <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">

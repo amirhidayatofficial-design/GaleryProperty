@@ -17,6 +17,9 @@
 
     // Bantuan (customer support): pembeli & agency chat dengan admin; admin membalas dari inbox
     $unreadSupport = $user ? \App\Models\SupportConversation::unreadConversationCountFor($user) : 0;
+
+    // Admin: jumlah listing yang menunggu verifikasi
+    $pendingListings = $user?->isAdmin() ? \App\Models\PropertyProject::where('is_verified', false)->count() : 0;
 @endphp
 
 <nav x-data="{ open: false }" class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-cream-dark">
@@ -49,6 +52,10 @@
                         <x-nav-link :href="route('agency.property-projects.index')" :active="request()->routeIs('agency.property-projects.*')">
                             {{ __('Listing Saya') }}
                         </x-nav-link>
+
+                        <x-nav-link :href="route('agency.commissions.index')" :active="request()->routeIs('agency.commissions.*')">
+                            {{ __('Komisi Saya') }}
+                        </x-nav-link>
                     @endif
 
                     @if ($canChat)
@@ -70,6 +77,13 @@
                     @if ($user?->isAdmin())
                         <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                             {{ __('Kelola Pengguna') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('admin.listing-verifications.index')" :active="request()->routeIs('admin.listing-verifications.*')">
+                            {{ __('Verifikasi Listing') }}
+                            @if ($pendingListings)
+                                <span class="ms-1.5 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-amber-500 text-white text-[11px] font-bold">{{ $pendingListings }}</span>
+                            @endif
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.support.index')" :active="request()->routeIs('admin.support.*')">
@@ -122,6 +136,12 @@
                                 {{ __('Profile') }}
                             </x-dropdown-link>
 
+                            @if ($user->isAgencyPartner())
+                                <x-dropdown-link :href="route('agency.profile.edit')">
+                                    {{ __('Profil Agency') }}
+                                </x-dropdown-link>
+                            @endif
+
                             <!-- Authentication -->
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
@@ -173,6 +193,10 @@
                 <x-responsive-nav-link :href="route('agency.property-projects.index')" :active="request()->routeIs('agency.property-projects.*')">
                     {{ __('Listing Saya') }}
                 </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('agency.commissions.index')" :active="request()->routeIs('agency.commissions.*')">
+                    {{ __('Komisi Saya') }}
+                </x-responsive-nav-link>
             @endif
 
             @if ($canChat)
@@ -188,6 +212,10 @@
             @if ($user?->isAdmin())
                 <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                     {{ __('Kelola Pengguna') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('admin.listing-verifications.index')" :active="request()->routeIs('admin.listing-verifications.*')">
+                    {{ __('Verifikasi Listing') }}{{ $pendingListings ? " ({$pendingListings})" : '' }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('admin.support.index')" :active="request()->routeIs('admin.support.*')">
@@ -214,6 +242,12 @@
                     <x-responsive-nav-link :href="route('profile.edit')">
                         {{ __('Profile') }}
                     </x-responsive-nav-link>
+
+                    @if ($user->isAgencyPartner())
+                        <x-responsive-nav-link :href="route('agency.profile.edit')">
+                            {{ __('Profil Agency') }}
+                        </x-responsive-nav-link>
+                    @endif
 
                     <!-- Authentication -->
                     <form method="POST" action="{{ route('logout') }}">

@@ -135,12 +135,7 @@ class AgencyPartnerController extends Controller
                 Rule::exists('users', 'id')->where('role', 'agency_partner'),
                 Rule::unique('agency_partners', 'user_id')->ignore($agencyPartner?->id),
             ],
-            'agency_name' => ['required', 'string', 'max:150'],
-            'license_number' => ['nullable', 'string', 'max:100'],
-            'company_address' => ['nullable', 'string'],
-            'bank_name' => ['nullable', 'string', Rule::in(AgencyPartner::BANKS)],
-            'bank_account_number' => ['nullable', 'string', 'max:50'],
-            'bank_account_holder' => ['nullable', 'string', 'max:150'],
+            ...AgencyPartner::profileRules(),
             'verification_status' => ['required', Rule::in(array_keys(AgencyPartner::VERIFICATION_STATUSES))],
         ]);
     }

@@ -1,51 +1,64 @@
 <x-app-layout>
     <x-slot name="header">
         <x-admin.header
-            title="Komisi Agency"
-            subtitle="Perhitungan dan pencairan bagi hasil komisi agen per akad."
-            :create-url="route('admin.commissions.create')"
-            create-label="Tambah Komisi"
+            title="Komisi"
+            subtitle="Komisi agency per termin. Diterbitkan otomatis saat akad jual beli ditandatangani 3 pihak."
         />
     </x-slot>
+
+    @php($tabs = ['' => 'Semua', ...\App\Models\Commission::STATUSES])
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             <x-admin.flash />
 
-            <x-admin.filter
-                :action="route('admin.commissions.index')"
-                placeholder="Nomor akad atau nama agency..."
-                :keys="['search', 'status']"
-            >
-                <x-admin.filter-select name="status" label="Status" :options="\App\Models\Commission::STATUSES" />
+            @if ($overdueCount)
+                <a href="{{ route('admin.commissions.index', ['status' => 'overdue']) }}" class="block p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm hover:bg-amber-100 transition">
+                    <strong>{{ $overdueCount }} invoice</strong> lewat jatuh tempo. Kirim pengingat ke developer; developer terkait tidak dapat menambah listing baru sampai tagihannya lunas (tanpa denda).
+                </a>
+            @endif
+
+            <div class="flex flex-wrap gap-2">
+                @foreach ($tabs as $value => $label)
+                    <a href="{{ route('admin.commissions.index', array_filter(['status' => $value])) }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition {{ (string) $status === (string) $value ? 'bg-primary-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-primary-300' }}">
+                        {{ $label }}
+                        @if ($value !== '')
+                            <span class="text-xs opacity-75">{{ $counts[$value] ?? 0 }}</span>
+                        @endif
+                    </a>
+                @endforeach
+            </div>
+
+            <x-admin.filter :action="route('admin.commissions.index')" placeholder="Nomor invoice, nomor akad, atau nama agency..." :keys="['search', 'status']">
+                @if ($status)
+                    <input type="hidden" name="status" value="{{ $status }}">
+                @endif
             </x-admin.filter>
 
-            <x-admin.table :headers="['Akad', 'Agency', 'Total Komisi', 'Komisi Bersih', 'Status']" :paginator="$commissions">
+            <x-admin.table :headers="['Akad / Termin', 'Agency', 'Komisi Termin', 'Bagian Agency', 'Status']" :paginator="$commissions">
                 @forelse ($commissions as $commission)
                     <tr class="hover:bg-gray-50/60 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="font-semibold text-gray-900">{{ $commission->digitalAkad?->akad_number ?? '-' }}</div>
-                            <div class="text-xs text-gray-500">Transaksi Rp {{ number_format($commission->base_transaction_amount, 0, ',', '.') }}</div>
+                        <td class="px-6 py-4">
+                            <div class="font-semibold text-gray-900">{{ $commission->digitalAkad?->akad_number }} · {{ $commission->terminLabel() }}</div>
+                            <div class="text-xs text-gray-400">{{ $commission->digitalAkad?->propertyProject?->title }}</div>
+                            @if ($commission->invoice_number)
+                                <div class="text-xs text-gray-500 mt-0.5">{{ $commission->invoice_number }}</div>
+                            @endif
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-600">{{ $commission->agencyPartner?->agency_name ?? '-' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">Rp {{ number_format($commission->total_commission, 0, ',', '.') }}</div>
-                            <div class="text-xs text-gray-500">{{ $commission->commission_rate }}% · fee Rp {{ number_format($commission->platform_fee, 0, ',', '.') }}</div>
-                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $commission->agencyPartner?->agency_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp {{ number_format($commission->total_commission, 0, ',', '.') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-primary-700">Rp {{ number_format($commission->net_commission, 0, ',', '.') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <x-admin.badge :value="$commission->status" :labels="\App\Models\Commission::STATUSES" />
-                            @if ($commission->paid_at)
-                                <div class="text-xs text-gray-400 mt-1">{{ $commission->paid_at->format('d M Y') }}</div>
+                            @if ($commission->isOverdue())
+                                <div class="text-[11px] font-semibold text-amber-700 mt-1">Lewat jatuh tempo</div>
+                            @elseif ($commission->isPayoutLate())
+                                <div class="text-[11px] font-semibold text-rose-700 mt-1">Payout terlambat</div>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <x-admin.row-actions
-                                :show="route('admin.commissions.show', $commission)"
-                                :edit="route('admin.commissions.edit', $commission)"
-                                :destroy="route('admin.commissions.destroy', $commission)"
-                                confirm="Hapus data komisi ini?"
-                            />
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <a href="{{ route('admin.commissions.show', $commission) }}" class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition">Kelola</a>
                         </td>
                     </tr>
                 @empty
