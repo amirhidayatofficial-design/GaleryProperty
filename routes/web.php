@@ -22,6 +22,7 @@ Route::get('/', LandingController::class)->middleware('guest')->name('home');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
 
+// Profil tetap bisa dibuka akun pending, misalnya untuk membetulkan email yang salah ketik
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -35,14 +36,14 @@ Route::middleware('not-admin')->group(function () {
 });
 
 // Bantuan (customer support): pembeli dan agency partner chat dengan tim admin
-Route::middleware(['auth', 'role:buyer,agency_partner'])->prefix('bantuan')->name('support.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:buyer,agency_partner'])->prefix('bantuan')->name('support.')->group(function () {
     Route::get('/', [SupportController::class, 'show'])->name('show');
     Route::get('/messages', [SupportController::class, 'messages'])->name('messages');
     Route::post('/messages', [SupportController::class, 'send'])->name('send');
 });
 
 // Chat calon pembeli <-> agency partner
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/properti/{propertyProject:slug}/chat', [ChatController::class, 'start'])->name('chat.start');
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/{conversation}', [ChatController::class, 'show'])->name('chat.show');
@@ -51,12 +52,12 @@ Route::middleware('auth')->group(function () {
 });
 
 // Area Agency Partner: pengajuan listing
-Route::middleware(['auth', 'role:agency_partner'])->prefix('agency')->name('agency.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:agency_partner'])->prefix('agency')->name('agency.')->group(function () {
     Route::resource('property-projects', AgencyPropertyProjectController::class)->except(['destroy']);
 });
 
 // Super Admin Management Routes
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', AdminUserController::class);
     Route::resource('agency-partners', AgencyPartnerController::class);
     Route::resource('property-projects', PropertyProjectController::class);

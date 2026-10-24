@@ -43,6 +43,12 @@
                             {{ __('A new verification link has been sent to your email address.') }}
                         </p>
                     @endif
+
+                    @if (session('error'))
+                        <p class="mt-2 font-medium text-sm text-rose-600">{{ session('error') }}</p>
+                    @endif
+
+                    <p class="mt-2 text-sm text-gray-500">Akun berstatus <strong>pending</strong> sampai email diverifikasi, sehingga fitur seperti chat dan Bantuan belum dapat digunakan.</p>
                 </div>
             @endif
         </div>

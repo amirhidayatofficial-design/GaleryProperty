@@ -26,15 +26,24 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Email baru harus diverifikasi ulang: status kembali ke pending
+        $emailChanged = $user->isDirty('email');
+        if ($emailChanged) {
+            $user->markEmailAsUnverified();
         }
 
-        $request->user()->save();
+        $user->save();
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        if ($emailChanged && ! $user->trySendEmailVerification()) {
+            return Redirect::route('profile.edit')
+                ->with('status', 'profile-updated')
+                ->with('error', 'Profil tersimpan, tetapi email verifikasi gagal dikirim. Klik tautan kirim ulang di bawah.');
+        }
+
+        return Redirect::route('profile.edit')->with('status', $emailChanged ? 'verification-link-sent' : 'profile-updated');
     }
 
     /**

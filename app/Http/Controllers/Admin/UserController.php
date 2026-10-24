@@ -75,23 +75,25 @@ class UserController extends Controller
             'phone' => ['nullable', ...User::phoneRules(), 'unique:users,phone'],
             // Admin tidak dapat mendaftarkan akun admin baru
             'role' => ['required', 'string', Rule::in(['agency_partner', 'buyer'])],
-            'status' => ['required', 'string', Rule::in(['active', 'pending', 'suspended'])],
+            'status' => ['required', 'string', Rule::in(array_keys(User::STATUSES))],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ]);
 
-        $user = User::create([
+        $user = new User([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
             'role' => $validated['role'],
-            'status' => $validated['status'],
             'password' => Hash::make($validated['password']),
-            'email_verified_at' => now(),
         ]);
+
+        // Aktif = langsung terverifikasi; pending = pengguna harus memverifikasi email sendiri
+        $needsVerification = $user->applyStatusFromAdmin($validated['status']);
+        $user->save();
 
         return redirect()
             ->route('admin.users.index')
-            ->with('success', "Pengguna '{$user->name}' berhasil ditambahkan ke dalam sistem.");
+            ->with(...$this->savedMessage("Pengguna '{$user->name}' berhasil ditambahkan ke dalam sistem.", $user, $needsVerification));
     }
 
     /**
@@ -123,7 +125,7 @@ class UserController extends Controller
             'phone' => ['nullable', ...User::phoneRules(), Rule::unique('users')->ignore($user->id)],
             // Akun non-admin tidak dapat dinaikkan menjadi admin
             'role' => ['required', 'string', Rule::in($user->isAdmin() ? ['admin', 'agency_partner', 'buyer'] : ['agency_partner', 'buyer'])],
-            'status' => ['required', 'string', Rule::in(['active', 'pending', 'suspended'])],
+            'status' => ['required', 'string', Rule::in(array_keys(User::STATUSES))],
             'password' => ['nullable', 'string', 'confirmed', Password::defaults()],
         ]);
 
@@ -145,7 +147,7 @@ class UserController extends Controller
         $user->email = $validated['email'];
         $user->phone = $validated['phone'] ?? null;
         $user->role = $validated['role'];
-        $user->status = $validated['status'];
+        $needsVerification = $user->applyStatusFromAdmin($validated['status']);
 
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
@@ -155,7 +157,23 @@ class UserController extends Controller
 
         return redirect()
             ->route('admin.users.index')
-            ->with('success', "Data pengguna '{$user->name}' berhasil diperbarui.");
+            ->with(...$this->savedMessage("Data pengguna '{$user->name}' berhasil diperbarui.", $user, $needsVerification));
+    }
+
+    /**
+     * Pesan flash setelah menyimpan pengguna, sekaligus mengirim email verifikasi bila akun masuk ke status pending.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function savedMessage(string $message, User $user, bool $needsVerification): array
+    {
+        if (! $needsVerification) {
+            return ['success', $message];
+        }
+
+        return $user->trySendEmailVerification()
+            ? ['success', "{$message} Email verifikasi telah dikirim ke {$user->email}."]
+            : ['error', "{$message} Namun email verifikasi gagal dikirim; periksa pengaturan email aplikasi."];
     }
 
     /**

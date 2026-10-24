@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'not-admin' => \App\Http\Middleware\EnsureUserIsNotAdmin::class,
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
         ]);
+
+        // Akun yang di-suspend saat sedang login langsung dikeluarkan
+        $middleware->web(append: [
+            \App\Http\Middleware\LogoutSuspendedUser::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

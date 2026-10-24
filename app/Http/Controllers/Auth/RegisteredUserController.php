@@ -36,16 +36,20 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // Akun baru berstatus pending sampai email diverifikasi
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => 'buyer',
+            'status' => User::STATUS_PENDING,
         ]);
 
+        // Mengirim email verifikasi (lihat User::sendEmailVerificationNotification)
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('verification.notice', absolute: false));
     }
 }

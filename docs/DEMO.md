@@ -83,7 +83,7 @@ Tujuan: menunjukkan peran admin sebagai penjaga kualitas dan kepatuhan syariah.
 | 4 | **Kelola Data → Agency Partner**, coba hapus **PT Berkah Properti Syariah** | Ditolak karena agency masih memiliki riwayat komisi. |
 | 5 | **Kelola Data → Akad Digital**, buka salah satu akad | Nomor akad otomatis `AKAD/YYYYMM/XXXX` dan status tanda tangan 3 pihak. |
 | 6 | **Kelola Data → Komisi**, buka salah satu komisi | Total komisi = nilai transaksi × persentase, komisi bersih = total − biaya platform. |
-| 7 | **Kelola Pengguna** | CRUD akun semua peran. Admin juga bisa mengganti kata sandi pengguna yang lupa (lihat [Limitasi](../README.md#f-limitasi-saat-ini)). |
+| 7 | **Kelola Pengguna** | CRUD akun semua peran. Ubah status pembeli menjadi **Suspended**, lalu coba login sebagai pembeli itu: ditolak dengan pesan akun ditangguhkan. Mengubah status ke **Aktif** sama dengan memverifikasi email secara manual. |
 | 8 | **Kelola Pengguna → Tambah Pengguna Baru**, buka pilihan Peran | Hanya ada Calon Pembeli dan Mitra Agency. Akun Super Admin tidak bisa dibuat atau dinaikkan dari aplikasi. |
 
 ---
@@ -112,7 +112,9 @@ Gunakan jendela biasa untuk **admin** dan **pembeli**, serta jendela incognito u
 4. Logout.
 
 ### Langkah 3 — Calon pembeli baru mendaftar dan bertanya *(jendela biasa)*
-1. **Daftar** dengan nama **Ahmad Demo**, email `ahmad.demo@example.com`, kata sandi bebas (minimal 8 karakter). Pembeli langsung login.
+1. **Daftar** dengan nama **Ahmad Demo**, email `ahmad.demo@example.com`, kata sandi bebas (minimal 8 karakter). Akun berstatus **pending** dan diarahkan ke halaman *Cek email Anda*.
+   - Buka inbox **Mailtrap**, klik **Verifikasi Alamat Email** di email dari GalleryProperty. Akun menjadi **active** dan masuk ke Dashboard.
+   - *(Opsional)* Sebelum verifikasi, coba buka **Chat** atau **Bantuan**: selalu diarahkan kembali ke halaman verifikasi.
 2. Buka **Katalog** → **Griya Tahfidz Residence Bekasi**. Kartu kanan menampilkan *Dipasarkan oleh PT Berkah Properti Syariah*, tanpa kontak pribadi.
 3. Klik **Chat Agency**, kirim: *"Assalamu'alaikum, apakah masih ada unit hook? Skema istishna-nya berapa tahap?"*
 
@@ -157,5 +159,5 @@ Gunakan jendela biasa untuk **admin** dan **pembeli**, serta jendela incognito u
 | Kenapa pembeli tidak bisa langsung WhatsApp agency? | Keputusan produk: semua komunikasi lewat chat website agar tercatat dan lead otomatis masuk ke sistem. |
 | Siapa yang tanda tangan atas nama developer? | Agency, berdasarkan PKS / surat kuasa (*wakalah*) yang dilampirkan saat pengajuan listing. Developer belum punya akun di MVP ini. |
 | Apakah sistem memproses pembayaran? | Tidak. Pembayaran properti dan komisi terjadi di luar sistem; sistem hanya mencatat nilai, status, dan bukti transfer. |
-| Bagaimana jika pembeli lupa kata sandi? | Admin mengganti kata sandinya lewat Kelola Pengguna. Fitur "Lupa kata sandi" via email belum aktif (lihat Limitasi). |
+| Bagaimana jika pembeli lupa kata sandi? | Klik **Lupa kata sandi?** di halaman login; tautan atur ulang dikirim lewat email (saat demo masuk ke inbox Mailtrap). Admin juga bisa mengganti kata sandinya lewat Kelola Pengguna. |
 | Bagaimana agency baru bergabung? | Admin membuat akun ber-role Mitra Agency, lalu membuat dan memverifikasi profil agency-nya di Kelola Data → Agency Partner. |

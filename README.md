@@ -36,9 +36,7 @@ Sebagai wadah terpercaya untuk mencari, menyaring, dan bertransaksi properti hal
 > **Catatan implementasi:** langkah 1, 2, 3, dan 6 sudah diterapkan di aplikasi (menu **Listing Saya** untuk agency, **Katalog** publik, dan **Chat**). Langkah 4 dan 5 (survei, booking, penerbitan akad) masih dicatat oleh admin melalui menu **Kelola Data**.
 
 ### F. Limitasi Saat Ini
-- **Email belum terkirim sungguhan.** Aplikasi belum terhubung ke layanan pengirim email (`MAIL_MAILER=log`), sehingga email hanya tercatat di `storage/logs/laravel.log`. Akibatnya:
-  - Fitur **Lupa kata sandi** belum bisa dipakai pengguna. Sebagai gantinya, admin mengganti kata sandi pengguna lewat menu **Kelola Pengguna**.
-  - Tidak ada verifikasi email saat registrasi.
+- **Email masih memakai sandbox Mailtrap.** Email verifikasi akun dan lupa kata sandi dikirim lewat [Mailtrap](https://mailtrap.io) (lihat Langkah 3 di [bagian 7](#7-panduan-setup-migrasi--seeding)), sehingga email masuk ke inbox uji Mailtrap, **bukan** ke alamat email asli pengguna. Untuk production, ganti ke layanan SMTP sungguhan (mis. Brevo, Resend, Mailgun).
 - **Agency belum bisa mendaftar sendiri.** Admin membuat akun ber-role Mitra Agency, lalu membuat dan memverifikasi profil agency-nya.
 - **Chat tidak real-time sungguhan.** Pesan baru diperiksa setiap 5 detik, bukan lewat websocket.
 - **Lead dari chat belum memiliki nomor WhatsApp** (tercatat `-`), karena registrasi tidak meminta nomor. Admin perlu mengisinya sebelum menyimpan perubahan lead.
@@ -184,12 +182,21 @@ Satu user story untuk setiap MVP (US-01 sampai US-05), ditambah story sesuai [Al
 
 ### B. Kebijakan Keamanan & Rekening
 1. **Identitas Unik**: Email dan nomor WhatsApp (`phone`) wajib unik untuk mencegah duplikasi akun prospek dan mitra.
-2. **Status Akun**:
-   - `pending`: Menunggu persetujuan berkas legalitas agen oleh Admin.
-   - `active`: Akun aktif dan dapat bertransaksi penuh.
-   - `suspended`: Akun dinonaktifkan jika melanggar ketentuan syariah atau etika bisnis.
+2. **Status Akun** (*state machine* verifikasi akun):
+   ```
+    registrasi ──▶ pending ──(klik tautan di email)──▶ active
+                      │                                 │  ▲
+                      │         admin: suspend          ▼  │ admin: aktifkan
+                      └───────────────────────────▶ suspended
+   ```
+   - `pending`: Email belum diverifikasi. Akun baru hasil registrasi selalu mulai di status ini. Pengguna bisa login, tetapi hanya dapat membuka halaman verifikasi email, kirim ulang email verifikasi, profil, dan katalog publik.
+   - `active`: Email sudah diverifikasi; seluruh fitur sesuai peran dapat digunakan. Berpindah otomatis dari `pending` saat tautan verifikasi diklik (tautan bisa dibuka tanpa login dan berlaku 60 menit).
+   - `suspended`: Akun dinonaktifkan admin jika melanggar ketentuan syariah atau etika bisnis. Login ditolak, sesi yang sedang berjalan langsung dikeluarkan, dan verifikasi email tidak mengubah status ini.
 
-   > ⚠️ **Belum diterapkan di aplikasi:** status `pending` dan `suspended` saat ini belum dicek saat login, sehingga akun tersebut masih bisa masuk dan bertransaksi. Lihat temuan **SEC-01** di [bagian 9](#9-hasil-security-testing).
+   Aturan tambahan:
+   - Pengguna yang **mengganti email** di profil kembali ke `pending` dan menerima email verifikasi baru.
+   - Admin dapat mengubah status lewat **Kelola Pengguna**: mengubah ke `active` berarti memverifikasi email secara manual; mengubah ke `pending` mengirim email verifikasi ke pengguna.
+   - Persetujuan profil agency (berkas legalitas) dicatat terpisah di kolom `verification_status` pada data **Agency Partner**.
 3. **Rekening Komisi**: Agency partner wajib mendaftarkan rekening pada bank syariah resmi (Bank Syariah Indonesia / Bank Muamalat / BCA Syariah).
 
 ---
@@ -299,6 +306,19 @@ New-Item -ItemType File -Path database\database.sqlite -Force
 # Linux / Mac:
 touch database/database.sqlite
 ```
+Atur pengiriman email (verifikasi akun & lupa kata sandi) lewat **Mailtrap**:
+1. Daftar gratis di [mailtrap.io](https://mailtrap.io), lalu buka **Email Testing → Inboxes → My Inbox → SMTP Settings**.
+2. Salin *username* dan *password* SMTP ke `.env`:
+   ```env
+   MAIL_MAILER=smtp
+   MAIL_HOST=sandbox.smtp.mailtrap.io
+   MAIL_PORT=2525
+   MAIL_USERNAME=<username-mailtrap>
+   MAIL_PASSWORD=<password-mailtrap>
+   ```
+3. Jalankan `php artisan config:clear`. Email yang dikirim aplikasi akan muncul di inbox Mailtrap tersebut.
+
+*(Tanpa kredensial Mailtrap, registrasi tetap berjalan tetapi email gagal terkirim. Untuk bekerja offline, set `MAIL_MAILER=log` agar email tercatat di `storage/logs/laravel.log`.)*
 
 ### Langkah 4: Jalankan Migrasi & Seeder
 ```bash
@@ -366,15 +386,15 @@ Hasil audit integritas data pasca eksekusi `php artisan db:seed`:
 
 ### B. Temuan (*Pain Points*)
 
-Status semua temuan: **belum diperbaiki**.
+Status: **SEC-01 sudah diperbaiki** dan **SEC-05 diperbaiki sebagian** (24 Oktober 2026, lewat *state machine* verifikasi akun). Temuan lainnya **belum diperbaiki**.
 
 | ID | Tingkat | Temuan | Bukti Pengujian | Rekomendasi |
 | :--- | :--- | :--- | :--- | :--- |
-| SEC-01 | 🔴 Tinggi | Akun `suspended`/`pending` tetap bisa login dan bertransaksi | User diubah ke `suspended` → login berhasil ke dashboard, masih bisa kirim pesan | Cek `status === 'active'` saat login dan di middleware untuk sesi yang sudah berjalan |
+| SEC-01 | ✅ Diperbaiki | Akun `suspended`/`pending` tetap bisa login dan bertransaksi | User diubah ke `suspended` → login berhasil ke dashboard, masih bisa kirim pesan | **Sudah diterapkan:** akun `suspended` ditolak saat login dan dikeluarkan dari sesi yang berjalan; akun `pending` hanya bisa mengakses halaman verifikasi email dan profil |
 | SEC-02 | 🔴 Tinggi | Dokumen sensitif (PKS/surat kuasa, bukti transfer komisi, dokumen akad) tersimpan di disk `public` dan dapat dibuka tanpa login | Dokumen tersedia di `/storage/properties/legal/<nama-acak>.pdf`; siapa pun yang memegang URL dapat mengunduhnya | Pindahkan ke disk privat (`local`) dan layani lewat route yang memeriksa hak akses |
 | SEC-03 | 🔴 Tinggi | Agency yang menghapus akunnya sendiri memicu error server; penghapusan akun juga ikut menghapus riwayat chat pihak lain | `DELETE /profile` sebagai agency → HTTP `500` (`FOREIGN KEY constraint failed`) karena data komisi | Nonaktifkan fitur hapus akun untuk agency/pembeli (ganti dengan penonaktifan oleh admin), atau gunakan *soft delete* |
 | SEC-04 | 🟠 Sedang | Tidak ada pembatasan laju (*rate limit*) untuk kirim pesan dan registrasi | 60 pesan support, 60 pesan chat, dan 30 registrasi akun palsu berturut-turut semuanya diterima | Tambahkan middleware `throttle` pada route kirim pesan, mulai chat, dan registrasi |
-| SEC-05 | 🟠 Sedang | Kata sandi lemah diterima dan email tidak diverifikasi | Registrasi dengan kata sandi `password` berhasil; email profil bisa diganti ke alamat milik orang lain tanpa konfirmasi | Perketat `Password::defaults()` (panjang + huruf + angka + `uncompromised()`); aktifkan verifikasi email setelah layanan email terhubung |
+| SEC-05 | 🟠 Sedang (sebagian diperbaiki) | Kata sandi lemah diterima dan email tidak diverifikasi | Registrasi dengan kata sandi `password` berhasil; email profil bisa diganti ke alamat milik orang lain tanpa konfirmasi | Verifikasi email **sudah diterapkan** (registrasi & ganti email wajib verifikasi). **Sisa:** perketat `Password::defaults()` (panjang + huruf + angka + `uncompromised()`) |
 | SEC-06 | 🟠 Sedang | Kredensial akun contoh tercantum di README dan `docs/DEMO.md` | `admin123` / `password123` terbaca oleh siapa pun yang mengakses repositori | Jangan jalankan seeder di production; ganti seluruh kata sandi default sebelum *go-live* |
 | SEC-07 | 🟠 Sedang | Agency dapat mengisi persentase komisinya sendiri hingga 100% dengan harga Rp1 | Pengajuan listing dengan `commission_rate=100` dan `price=1` diterima | Batasi rentang komisi sesuai SOP (mis. 1–5%) dan harga minimum; tampilkan peringatan saat admin memverifikasi |
 | SEC-08 | 🟠 Sedang | Jumlah berkas per listing tidak dibatasi | 5 kali update listing → berkas bertambah dari 3 menjadi 28 | Batasi total foto per listing (bukan hanya per kiriman form) |
@@ -383,8 +403,8 @@ Status semua temuan: **belum diperbaiki**.
 | SEC-11 | 🟡 Rendah | Konfigurasi `.env` belum siap production | `APP_DEBUG=true` (halaman error menampilkan *stack trace*); `SESSION_SECURE_COOKIE` belum diset | Production: `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, wajib HTTPS |
 
 ### C. Prioritas Perbaikan
-1. **Wajib sebelum *go-live*:** SEC-01, SEC-02, SEC-06, SEC-11.
-2. **Segera setelahnya:** SEC-03, SEC-04, SEC-05.
+1. **Wajib sebelum *go-live*:** SEC-02, SEC-06, SEC-11 (SEC-01 sudah selesai).
+2. **Segera setelahnya:** SEC-03, SEC-04, sisa SEC-05 (aturan kata sandi).
 3. **Perbaikan lanjutan:** SEC-07, SEC-08, SEC-09, SEC-10.
 
 ---
